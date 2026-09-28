@@ -1,15 +1,17 @@
 import { defineConfig } from 'vitest/config';
 
+const WORKSPACES = ['packages/*', 'examples/*', 'eval/*'];
+
 export default defineConfig({
   test: {
-    projects: ['packages/*/vitest.config.ts'],
+    projects: WORKSPACES.map((workspace) => `${workspace}/vitest.config.ts`),
     coverage: {
       provider: 'v8',
-      include: ['packages/*/src/**/*.ts'],
+      include: WORKSPACES.map((workspace) => `${workspace}/src/**/*.ts`),
       exclude: [
-        'packages/*/src/**/*.{test,spec}.ts',
-        'packages/*/src/**/*.d.ts',
-        'packages/*/dist/**',
+        '*/*/src/**/*.{test,spec}.ts',
+        '*/*/src/**/*.d.ts',
+        '*/*/dist/**',
         '**/*.config.{js,mjs,cjs,ts}',
       ],
       reporter: ['text', 'html', 'lcov', 'json-summary'],
