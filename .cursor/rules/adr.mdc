@@ -1,0 +1,10 @@
+---
+description: "ADR follow / challenge / accept when architecture decisions are in play."
+alwaysApply: false
+---
+
+# Architecture Decision Records
+
+Follow the ADR contract in `AGENTS.md` and the full protocol in `.claude/skills/manage-adr/SKILL.md`.
+
+Do not load the whole `docs/adr/` tree; do not rewrite Accepted Decision sections in place; use Challenge → Proposed, then human Accept.
