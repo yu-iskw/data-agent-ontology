@@ -1,0 +1,22 @@
+{
+  "name": "@data-agent-ontology/example-mastra-basic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mastra data analytics agent that extracts an ontology from a local DuckDB warehouse.",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "extract": "tsx src/extract.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-core": "workspace:*",
+    "@duckdb/node-api": "1.5.5-r.5",
+    "@mastra/core": "^1.67.0",
+    "zod": "^4.6.5"
+  }
+}
