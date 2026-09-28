@@ -1,0 +1,2336 @@
+{
+  "version": {
+    "versionId": "answer",
+    "parentVersionId": null,
+    "reason": "revise",
+    "active": true
+  },
+  "domains": [
+    {
+      "domainId": "jaffle_shop",
+      "name": "Jaffle Shop",
+      "parentDomainId": null,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "domainId": "customers",
+      "name": "Customers",
+      "parentDomainId": "jaffle_shop",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "domainId": "orders",
+      "name": "Orders",
+      "parentDomainId": "jaffle_shop",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "domainId": "catalog",
+      "name": "Catalog",
+      "parentDomainId": "jaffle_shop",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "domainId": "locations",
+      "name": "Locations",
+      "parentDomainId": "jaffle_shop",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "domainId": "calendar",
+      "name": "Calendar",
+      "parentDomainId": "jaffle_shop",
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "tables": [
+    {
+      "tableId": "duckdb:main.customers",
+      "engine": "duckdb",
+      "path": "main.customers",
+      "kind": "table",
+      "domainIds": [
+        "customers"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.locations",
+      "engine": "duckdb",
+      "path": "main.locations",
+      "kind": "table",
+      "domainIds": [
+        "locations"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.metricflow_time_spine",
+      "engine": "duckdb",
+      "path": "main.metricflow_time_spine",
+      "kind": "table",
+      "domainIds": [
+        "calendar"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.order_items",
+      "engine": "duckdb",
+      "path": "main.order_items",
+      "kind": "table",
+      "domainIds": [
+        "orders"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.orders",
+      "engine": "duckdb",
+      "path": "main.orders",
+      "kind": "table",
+      "domainIds": [
+        "orders"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.products",
+      "engine": "duckdb",
+      "path": "main.products",
+      "kind": "table",
+      "domainIds": [
+        "catalog"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_customers",
+      "engine": "duckdb",
+      "path": "main.stg_customers",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_locations",
+      "engine": "duckdb",
+      "path": "main.stg_locations",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_order_items",
+      "engine": "duckdb",
+      "path": "main.stg_order_items",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_orders",
+      "engine": "duckdb",
+      "path": "main.stg_orders",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_products",
+      "engine": "duckdb",
+      "path": "main.stg_products",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.stg_supplies",
+      "engine": "duckdb",
+      "path": "main.stg_supplies",
+      "kind": "view",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:main.supplies",
+      "engine": "duckdb",
+      "path": "main.supplies",
+      "kind": "table",
+      "domainIds": [
+        "catalog"
+      ],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_customers",
+      "engine": "duckdb",
+      "path": "raw.raw_customers",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_items",
+      "engine": "duckdb",
+      "path": "raw.raw_items",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_orders",
+      "engine": "duckdb",
+      "path": "raw.raw_orders",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_products",
+      "engine": "duckdb",
+      "path": "raw.raw_products",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_stores",
+      "engine": "duckdb",
+      "path": "raw.raw_stores",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    },
+    {
+      "tableId": "duckdb:raw.raw_supplies",
+      "engine": "duckdb",
+      "path": "raw.raw_supplies",
+      "kind": "table",
+      "domainIds": [],
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "columns": [
+    {
+      "columnId": "duckdb:main.customers.customer_id",
+      "tableId": "duckdb:main.customers",
+      "name": "customer_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.customer_name",
+      "tableId": "duckdb:main.customers",
+      "name": "customer_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.count_lifetime_orders",
+      "tableId": "duckdb:main.customers",
+      "name": "count_lifetime_orders",
+      "dataType": "BIGINT",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.first_ordered_at",
+      "tableId": "duckdb:main.customers",
+      "name": "first_ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.last_ordered_at",
+      "tableId": "duckdb:main.customers",
+      "name": "last_ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.lifetime_spend_pretax",
+      "tableId": "duckdb:main.customers",
+      "name": "lifetime_spend_pretax",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.lifetime_tax_paid",
+      "tableId": "duckdb:main.customers",
+      "name": "lifetime_tax_paid",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.lifetime_spend",
+      "tableId": "duckdb:main.customers",
+      "name": "lifetime_spend",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 8,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.customers.customer_type",
+      "tableId": "duckdb:main.customers",
+      "name": "customer_type",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 9,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.locations.location_id",
+      "tableId": "duckdb:main.locations",
+      "name": "location_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.locations.location_name",
+      "tableId": "duckdb:main.locations",
+      "name": "location_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.locations.tax_rate",
+      "tableId": "duckdb:main.locations",
+      "name": "tax_rate",
+      "dataType": "DOUBLE",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.locations.opened_date",
+      "tableId": "duckdb:main.locations",
+      "name": "opened_date",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.metricflow_time_spine.date_day",
+      "tableId": "duckdb:main.metricflow_time_spine",
+      "name": "date_day",
+      "dataType": "DATE",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.order_item_id",
+      "tableId": "duckdb:main.order_items",
+      "name": "order_item_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.order_id",
+      "tableId": "duckdb:main.order_items",
+      "name": "order_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.product_id",
+      "tableId": "duckdb:main.order_items",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.ordered_at",
+      "tableId": "duckdb:main.order_items",
+      "name": "ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.product_name",
+      "tableId": "duckdb:main.order_items",
+      "name": "product_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.product_price",
+      "tableId": "duckdb:main.order_items",
+      "name": "product_price",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.is_food_item",
+      "tableId": "duckdb:main.order_items",
+      "name": "is_food_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.is_drink_item",
+      "tableId": "duckdb:main.order_items",
+      "name": "is_drink_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 8,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.order_items.supply_cost",
+      "tableId": "duckdb:main.order_items",
+      "name": "supply_cost",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 9,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.order_id",
+      "tableId": "duckdb:main.orders",
+      "name": "order_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.location_id",
+      "tableId": "duckdb:main.orders",
+      "name": "location_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.customer_id",
+      "tableId": "duckdb:main.orders",
+      "name": "customer_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.subtotal_cents",
+      "tableId": "duckdb:main.orders",
+      "name": "subtotal_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.tax_paid_cents",
+      "tableId": "duckdb:main.orders",
+      "name": "tax_paid_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.order_total_cents",
+      "tableId": "duckdb:main.orders",
+      "name": "order_total_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.subtotal",
+      "tableId": "duckdb:main.orders",
+      "name": "subtotal",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.tax_paid",
+      "tableId": "duckdb:main.orders",
+      "name": "tax_paid",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 8,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.order_total",
+      "tableId": "duckdb:main.orders",
+      "name": "order_total",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 9,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.ordered_at",
+      "tableId": "duckdb:main.orders",
+      "name": "ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 10,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.order_cost",
+      "tableId": "duckdb:main.orders",
+      "name": "order_cost",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 11,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.order_items_subtotal",
+      "tableId": "duckdb:main.orders",
+      "name": "order_items_subtotal",
+      "dataType": "DECIMAL(38,2)",
+      "ordinalPosition": 12,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.count_food_items",
+      "tableId": "duckdb:main.orders",
+      "name": "count_food_items",
+      "dataType": "HUGEINT",
+      "ordinalPosition": 13,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.count_drink_items",
+      "tableId": "duckdb:main.orders",
+      "name": "count_drink_items",
+      "dataType": "HUGEINT",
+      "ordinalPosition": 14,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.count_order_items",
+      "tableId": "duckdb:main.orders",
+      "name": "count_order_items",
+      "dataType": "BIGINT",
+      "ordinalPosition": 15,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.is_food_order",
+      "tableId": "duckdb:main.orders",
+      "name": "is_food_order",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 16,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.is_drink_order",
+      "tableId": "duckdb:main.orders",
+      "name": "is_drink_order",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 17,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.orders.customer_order_number",
+      "tableId": "duckdb:main.orders",
+      "name": "customer_order_number",
+      "dataType": "BIGINT",
+      "ordinalPosition": 18,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.product_id",
+      "tableId": "duckdb:main.products",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.product_name",
+      "tableId": "duckdb:main.products",
+      "name": "product_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.product_type",
+      "tableId": "duckdb:main.products",
+      "name": "product_type",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.product_description",
+      "tableId": "duckdb:main.products",
+      "name": "product_description",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.product_price",
+      "tableId": "duckdb:main.products",
+      "name": "product_price",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.is_food_item",
+      "tableId": "duckdb:main.products",
+      "name": "is_food_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.products.is_drink_item",
+      "tableId": "duckdb:main.products",
+      "name": "is_drink_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_customers.customer_id",
+      "tableId": "duckdb:main.stg_customers",
+      "name": "customer_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_customers.customer_name",
+      "tableId": "duckdb:main.stg_customers",
+      "name": "customer_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_locations.location_id",
+      "tableId": "duckdb:main.stg_locations",
+      "name": "location_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_locations.location_name",
+      "tableId": "duckdb:main.stg_locations",
+      "name": "location_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_locations.tax_rate",
+      "tableId": "duckdb:main.stg_locations",
+      "name": "tax_rate",
+      "dataType": "DOUBLE",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_locations.opened_date",
+      "tableId": "duckdb:main.stg_locations",
+      "name": "opened_date",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_order_items.order_item_id",
+      "tableId": "duckdb:main.stg_order_items",
+      "name": "order_item_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_order_items.order_id",
+      "tableId": "duckdb:main.stg_order_items",
+      "name": "order_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_order_items.product_id",
+      "tableId": "duckdb:main.stg_order_items",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.order_id",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "order_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.location_id",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "location_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.customer_id",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "customer_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.subtotal_cents",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "subtotal_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.tax_paid_cents",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "tax_paid_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.order_total_cents",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "order_total_cents",
+      "dataType": "BIGINT",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.subtotal",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "subtotal",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.tax_paid",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "tax_paid",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 8,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.order_total",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "order_total",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 9,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_orders.ordered_at",
+      "tableId": "duckdb:main.stg_orders",
+      "name": "ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 10,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.product_id",
+      "tableId": "duckdb:main.stg_products",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.product_name",
+      "tableId": "duckdb:main.stg_products",
+      "name": "product_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.product_type",
+      "tableId": "duckdb:main.stg_products",
+      "name": "product_type",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.product_description",
+      "tableId": "duckdb:main.stg_products",
+      "name": "product_description",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.product_price",
+      "tableId": "duckdb:main.stg_products",
+      "name": "product_price",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.is_food_item",
+      "tableId": "duckdb:main.stg_products",
+      "name": "is_food_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_products.is_drink_item",
+      "tableId": "duckdb:main.stg_products",
+      "name": "is_drink_item",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.supply_uuid",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "supply_uuid",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.supply_id",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "supply_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.product_id",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.supply_name",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "supply_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.supply_cost",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "supply_cost",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.stg_supplies.is_perishable_supply",
+      "tableId": "duckdb:main.stg_supplies",
+      "name": "is_perishable_supply",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.supply_uuid",
+      "tableId": "duckdb:main.supplies",
+      "name": "supply_uuid",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.supply_id",
+      "tableId": "duckdb:main.supplies",
+      "name": "supply_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.product_id",
+      "tableId": "duckdb:main.supplies",
+      "name": "product_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.supply_name",
+      "tableId": "duckdb:main.supplies",
+      "name": "supply_name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.supply_cost",
+      "tableId": "duckdb:main.supplies",
+      "name": "supply_cost",
+      "dataType": "DECIMAL(16,2)",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:main.supplies.is_perishable_supply",
+      "tableId": "duckdb:main.supplies",
+      "name": "is_perishable_supply",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_customers.id",
+      "tableId": "duckdb:raw.raw_customers",
+      "name": "id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_customers.name",
+      "tableId": "duckdb:raw.raw_customers",
+      "name": "name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_items.id",
+      "tableId": "duckdb:raw.raw_items",
+      "name": "id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_items.order_id",
+      "tableId": "duckdb:raw.raw_items",
+      "name": "order_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_items.sku",
+      "tableId": "duckdb:raw.raw_items",
+      "name": "sku",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.id",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.customer",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "customer",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.ordered_at",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "ordered_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.store_id",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "store_id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.subtotal",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "subtotal",
+      "dataType": "BIGINT",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.tax_paid",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "tax_paid",
+      "dataType": "BIGINT",
+      "ordinalPosition": 6,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_orders.order_total",
+      "tableId": "duckdb:raw.raw_orders",
+      "name": "order_total",
+      "dataType": "BIGINT",
+      "ordinalPosition": 7,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_products.sku",
+      "tableId": "duckdb:raw.raw_products",
+      "name": "sku",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_products.name",
+      "tableId": "duckdb:raw.raw_products",
+      "name": "name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_products.type",
+      "tableId": "duckdb:raw.raw_products",
+      "name": "type",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_products.price",
+      "tableId": "duckdb:raw.raw_products",
+      "name": "price",
+      "dataType": "BIGINT",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_products.description",
+      "tableId": "duckdb:raw.raw_products",
+      "name": "description",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_stores.id",
+      "tableId": "duckdb:raw.raw_stores",
+      "name": "id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_stores.name",
+      "tableId": "duckdb:raw.raw_stores",
+      "name": "name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_stores.opened_at",
+      "tableId": "duckdb:raw.raw_stores",
+      "name": "opened_at",
+      "dataType": "TIMESTAMP",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_stores.tax_rate",
+      "tableId": "duckdb:raw.raw_stores",
+      "name": "tax_rate",
+      "dataType": "DOUBLE",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_supplies.id",
+      "tableId": "duckdb:raw.raw_supplies",
+      "name": "id",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 1,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_supplies.name",
+      "tableId": "duckdb:raw.raw_supplies",
+      "name": "name",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 2,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_supplies.cost",
+      "tableId": "duckdb:raw.raw_supplies",
+      "name": "cost",
+      "dataType": "BIGINT",
+      "ordinalPosition": 3,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_supplies.perishable",
+      "tableId": "duckdb:raw.raw_supplies",
+      "name": "perishable",
+      "dataType": "BOOLEAN",
+      "ordinalPosition": 4,
+      "active": true,
+      "drifted": false
+    },
+    {
+      "columnId": "duckdb:raw.raw_supplies.sku",
+      "tableId": "duckdb:raw.raw_supplies",
+      "name": "sku",
+      "dataType": "VARCHAR",
+      "ordinalPosition": 5,
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "terms": [
+    {
+      "termId": "customer",
+      "name": "customer",
+      "domainId": "customers",
+      "definition": "A person who has purchased at least one item. One row per customer.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "location",
+      "name": "location",
+      "domainId": "locations",
+      "definition": "A store, named by city, with an open date and tax rate. One row per store.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "product",
+      "name": "product",
+      "domainId": "catalog",
+      "definition": "An SKU sold in stores. One row per product. product_type is jaffle or beverage.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "supply",
+      "name": "supply",
+      "domainId": "catalog",
+      "definition": "A supply used for one product. Grain is one supply and product combination.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "order",
+      "name": "order",
+      "domainId": "orders",
+      "definition": "One purchase placed by a customer at a store. One row per order.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "order_item",
+      "name": "order_item",
+      "domainId": "orders",
+      "definition": "One line on an order, for one product. One row per order item.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "termId": "calendar_day",
+      "name": "calendar_day",
+      "domainId": "calendar",
+      "definition": "One calendar date used to group events. Not a record of a business event.",
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "mappings": [
+    {
+      "mappingId": "customer.customer_id",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.customer_id",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.customer_name",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.customer_name",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.count_lifetime_orders",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.count_lifetime_orders",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.first_ordered_at",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.first_ordered_at",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.last_ordered_at",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.last_ordered_at",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.lifetime_spend_pretax",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.lifetime_spend_pretax",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.lifetime_tax_paid",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.lifetime_tax_paid",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.lifetime_spend",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.lifetime_spend",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "customer.customer_type",
+      "termId": "customer",
+      "columnId": "duckdb:main.customers.customer_type",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "location.location_id",
+      "termId": "location",
+      "columnId": "duckdb:main.locations.location_id",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "location.location_name",
+      "termId": "location",
+      "columnId": "duckdb:main.locations.location_name",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "location.tax_rate",
+      "termId": "location",
+      "columnId": "duckdb:main.locations.tax_rate",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "location.opened_date",
+      "termId": "location",
+      "columnId": "duckdb:main.locations.opened_date",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "calendar_day.date_day",
+      "termId": "calendar_day",
+      "columnId": "duckdb:main.metricflow_time_spine.date_day",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.order_item_id",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.order_item_id",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.order_id",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.order_id",
+      "role": "foreign_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.product_id",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.product_id",
+      "role": "foreign_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.ordered_at",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.ordered_at",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.product_name",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.product_name",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.product_price",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.product_price",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.is_food_item",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.is_food_item",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.is_drink_item",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.is_drink_item",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order_item.supply_cost",
+      "termId": "order_item",
+      "columnId": "duckdb:main.order_items.supply_cost",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.order_id",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.order_id",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.location_id",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.location_id",
+      "role": "foreign_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.customer_id",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.customer_id",
+      "role": "foreign_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.subtotal_cents",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.subtotal_cents",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.tax_paid_cents",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.tax_paid_cents",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.order_total_cents",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.order_total_cents",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.subtotal",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.subtotal",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.tax_paid",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.tax_paid",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.order_total",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.order_total",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.ordered_at",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.ordered_at",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.order_cost",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.order_cost",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.order_items_subtotal",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.order_items_subtotal",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.count_food_items",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.count_food_items",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.count_drink_items",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.count_drink_items",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.count_order_items",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.count_order_items",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.is_food_order",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.is_food_order",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.is_drink_order",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.is_drink_order",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "order.customer_order_number",
+      "termId": "order",
+      "columnId": "duckdb:main.orders.customer_order_number",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.product_id",
+      "termId": "product",
+      "columnId": "duckdb:main.products.product_id",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.product_name",
+      "termId": "product",
+      "columnId": "duckdb:main.products.product_name",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.product_type",
+      "termId": "product",
+      "columnId": "duckdb:main.products.product_type",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.product_description",
+      "termId": "product",
+      "columnId": "duckdb:main.products.product_description",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.product_price",
+      "termId": "product",
+      "columnId": "duckdb:main.products.product_price",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.is_food_item",
+      "termId": "product",
+      "columnId": "duckdb:main.products.is_food_item",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "product.is_drink_item",
+      "termId": "product",
+      "columnId": "duckdb:main.products.is_drink_item",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.supply_uuid",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.supply_uuid",
+      "role": "primary_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.supply_id",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.supply_id",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.product_id",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.product_id",
+      "role": "foreign_key",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.supply_name",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.supply_name",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.supply_cost",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.supply_cost",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "mappingId": "supply.is_perishable_supply",
+      "termId": "supply",
+      "columnId": "duckdb:main.supplies.is_perishable_supply",
+      "role": "attribute",
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "relations": [
+    {
+      "relationId": "customer_places_order",
+      "name": "places",
+      "fromTermId": "customer",
+      "toTermId": "order",
+      "fromColumnId": "duckdb:main.customers.customer_id",
+      "toColumnId": "duckdb:main.orders.customer_id",
+      "join": "main.customers.customer_id = main.orders.customer_id",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "order_placed_at_location",
+      "name": "placed_at",
+      "fromTermId": "order",
+      "toTermId": "location",
+      "fromColumnId": "duckdb:main.orders.location_id",
+      "toColumnId": "duckdb:main.locations.location_id",
+      "join": "main.orders.location_id = main.locations.location_id",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "order_contains_order_item",
+      "name": "contains",
+      "fromTermId": "order",
+      "toTermId": "order_item",
+      "fromColumnId": "duckdb:main.orders.order_id",
+      "toColumnId": "duckdb:main.order_items.order_id",
+      "join": "main.orders.order_id = main.order_items.order_id",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "order_item_for_product",
+      "name": "for_product",
+      "fromTermId": "order_item",
+      "toTermId": "product",
+      "fromColumnId": "duckdb:main.order_items.product_id",
+      "toColumnId": "duckdb:main.products.product_id",
+      "join": "main.order_items.product_id = main.products.product_id",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "supply_used_by_product",
+      "name": "used_by",
+      "fromTermId": "supply",
+      "toTermId": "product",
+      "fromColumnId": "duckdb:main.supplies.product_id",
+      "toColumnId": "duckdb:main.products.product_id",
+      "join": "main.supplies.product_id = main.products.product_id",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "order_occurs_on_calendar_day",
+      "name": "occurs_on",
+      "fromTermId": "order",
+      "toTermId": "calendar_day",
+      "fromColumnId": "duckdb:main.orders.ordered_at",
+      "toColumnId": "duckdb:main.metricflow_time_spine.date_day",
+      "join": "CAST(main.orders.ordered_at AS DATE) = main.metricflow_time_spine.date_day",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "relationId": "order_item_occurs_on_calendar_day",
+      "name": "occurs_on",
+      "fromTermId": "order_item",
+      "toTermId": "calendar_day",
+      "fromColumnId": "duckdb:main.order_items.ordered_at",
+      "toColumnId": "duckdb:main.metricflow_time_spine.date_day",
+      "join": "CAST(main.order_items.ordered_at AS DATE) = main.metricflow_time_spine.date_day",
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "constraints": [
+    {
+      "constraintId": "use_main_marts",
+      "termId": "order",
+      "text": "Analyze from main marts. raw.* money columns are integer cents. Dollar amounts on main.orders (subtotal, tax_paid, order_total) are those cents divided by 100. Do not map terms onto raw.* or main.stg_*.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "order_total_identity",
+      "termId": "order",
+      "text": "main.orders.order_total = main.orders.subtotal + main.orders.tax_paid.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "order_items_subtotal_identity",
+      "termId": "order",
+      "text": "main.orders.order_items_subtotal = main.orders.subtotal.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "lifetime_spend_identity",
+      "termId": "customer",
+      "text": "main.customers.lifetime_spend = main.customers.lifetime_spend_pretax + main.customers.lifetime_tax_paid.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "product_type_vocabulary",
+      "termId": "product",
+      "text": "main.products.product_type is only jaffle or beverage. is_food_item is true exactly when product_type is jaffle. is_drink_item is true exactly when product_type is beverage.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "customer_type_status",
+      "termId": "customer",
+      "text": "main.customers.customer_type is only new or returning. new means count_lifetime_orders = 1. It is a status computed from orders, not a kind of person.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "supply_cost_no_double_count",
+      "termId": "order_item",
+      "text": "main.order_items.supply_cost and main.orders.order_cost already sum supplies for the product. Do not add them again to main.supplies.supply_cost.",
+      "active": true,
+      "drifted": false
+    },
+    {
+      "constraintId": "calendar_spine_not_events",
+      "termId": "calendar_day",
+      "text": "main.metricflow_time_spine.date_day is a calendar from 2000-01-01 through 2029-12-31, not a table of business events.",
+      "active": true,
+      "drifted": false
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "evidence:customer",
+      "targetId": "customer",
+      "source": "revise",
+      "summary": "Term customer is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:location",
+      "targetId": "location",
+      "source": "revise",
+      "summary": "Term location is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:product",
+      "targetId": "product",
+      "source": "revise",
+      "summary": "Term product is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:supply",
+      "targetId": "supply",
+      "source": "revise",
+      "summary": "Term supply is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:order",
+      "targetId": "order",
+      "source": "revise",
+      "summary": "Term order is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:order_item",
+      "targetId": "order_item",
+      "source": "revise",
+      "summary": "Term order_item is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:calendar_day",
+      "targetId": "calendar_day",
+      "source": "revise",
+      "summary": "Term calendar_day is the grain described in its definition, observed on the mapped main mart."
+    },
+    {
+      "evidenceId": "evidence:customer.customer_id",
+      "targetId": "customer.customer_id",
+      "source": "revise",
+      "summary": "Column main.customers.customer_id belongs to term customer as primary_key."
+    },
+    {
+      "evidenceId": "evidence:customer.customer_name",
+      "targetId": "customer.customer_name",
+      "source": "revise",
+      "summary": "Column main.customers.customer_name belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.count_lifetime_orders",
+      "targetId": "customer.count_lifetime_orders",
+      "source": "revise",
+      "summary": "Column main.customers.count_lifetime_orders belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.first_ordered_at",
+      "targetId": "customer.first_ordered_at",
+      "source": "revise",
+      "summary": "Column main.customers.first_ordered_at belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.last_ordered_at",
+      "targetId": "customer.last_ordered_at",
+      "source": "revise",
+      "summary": "Column main.customers.last_ordered_at belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.lifetime_spend_pretax",
+      "targetId": "customer.lifetime_spend_pretax",
+      "source": "revise",
+      "summary": "Column main.customers.lifetime_spend_pretax belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.lifetime_tax_paid",
+      "targetId": "customer.lifetime_tax_paid",
+      "source": "revise",
+      "summary": "Column main.customers.lifetime_tax_paid belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.lifetime_spend",
+      "targetId": "customer.lifetime_spend",
+      "source": "revise",
+      "summary": "Column main.customers.lifetime_spend belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer.customer_type",
+      "targetId": "customer.customer_type",
+      "source": "revise",
+      "summary": "Column main.customers.customer_type belongs to term customer as attribute."
+    },
+    {
+      "evidenceId": "evidence:location.location_id",
+      "targetId": "location.location_id",
+      "source": "revise",
+      "summary": "Column main.locations.location_id belongs to term location as primary_key."
+    },
+    {
+      "evidenceId": "evidence:location.location_name",
+      "targetId": "location.location_name",
+      "source": "revise",
+      "summary": "Column main.locations.location_name belongs to term location as attribute."
+    },
+    {
+      "evidenceId": "evidence:location.tax_rate",
+      "targetId": "location.tax_rate",
+      "source": "revise",
+      "summary": "Column main.locations.tax_rate belongs to term location as attribute."
+    },
+    {
+      "evidenceId": "evidence:location.opened_date",
+      "targetId": "location.opened_date",
+      "source": "revise",
+      "summary": "Column main.locations.opened_date belongs to term location as attribute."
+    },
+    {
+      "evidenceId": "evidence:calendar_day.date_day",
+      "targetId": "calendar_day.date_day",
+      "source": "revise",
+      "summary": "Column main.metricflow_time_spine.date_day belongs to term calendar_day as primary_key."
+    },
+    {
+      "evidenceId": "evidence:order_item.order_item_id",
+      "targetId": "order_item.order_item_id",
+      "source": "revise",
+      "summary": "Column main.order_items.order_item_id belongs to term order_item as primary_key."
+    },
+    {
+      "evidenceId": "evidence:order_item.order_id",
+      "targetId": "order_item.order_id",
+      "source": "revise",
+      "summary": "Column main.order_items.order_id belongs to term order_item as foreign_key."
+    },
+    {
+      "evidenceId": "evidence:order_item.product_id",
+      "targetId": "order_item.product_id",
+      "source": "revise",
+      "summary": "Column main.order_items.product_id belongs to term order_item as foreign_key."
+    },
+    {
+      "evidenceId": "evidence:order_item.ordered_at",
+      "targetId": "order_item.ordered_at",
+      "source": "revise",
+      "summary": "Column main.order_items.ordered_at belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order_item.product_name",
+      "targetId": "order_item.product_name",
+      "source": "revise",
+      "summary": "Column main.order_items.product_name belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order_item.product_price",
+      "targetId": "order_item.product_price",
+      "source": "revise",
+      "summary": "Column main.order_items.product_price belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order_item.is_food_item",
+      "targetId": "order_item.is_food_item",
+      "source": "revise",
+      "summary": "Column main.order_items.is_food_item belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order_item.is_drink_item",
+      "targetId": "order_item.is_drink_item",
+      "source": "revise",
+      "summary": "Column main.order_items.is_drink_item belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order_item.supply_cost",
+      "targetId": "order_item.supply_cost",
+      "source": "revise",
+      "summary": "Column main.order_items.supply_cost belongs to term order_item as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.order_id",
+      "targetId": "order.order_id",
+      "source": "revise",
+      "summary": "Column main.orders.order_id belongs to term order as primary_key."
+    },
+    {
+      "evidenceId": "evidence:order.location_id",
+      "targetId": "order.location_id",
+      "source": "revise",
+      "summary": "Column main.orders.location_id belongs to term order as foreign_key."
+    },
+    {
+      "evidenceId": "evidence:order.customer_id",
+      "targetId": "order.customer_id",
+      "source": "revise",
+      "summary": "Column main.orders.customer_id belongs to term order as foreign_key."
+    },
+    {
+      "evidenceId": "evidence:order.subtotal_cents",
+      "targetId": "order.subtotal_cents",
+      "source": "revise",
+      "summary": "Column main.orders.subtotal_cents belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.tax_paid_cents",
+      "targetId": "order.tax_paid_cents",
+      "source": "revise",
+      "summary": "Column main.orders.tax_paid_cents belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.order_total_cents",
+      "targetId": "order.order_total_cents",
+      "source": "revise",
+      "summary": "Column main.orders.order_total_cents belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.subtotal",
+      "targetId": "order.subtotal",
+      "source": "revise",
+      "summary": "Column main.orders.subtotal belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.tax_paid",
+      "targetId": "order.tax_paid",
+      "source": "revise",
+      "summary": "Column main.orders.tax_paid belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.order_total",
+      "targetId": "order.order_total",
+      "source": "revise",
+      "summary": "Column main.orders.order_total belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.ordered_at",
+      "targetId": "order.ordered_at",
+      "source": "revise",
+      "summary": "Column main.orders.ordered_at belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.order_cost",
+      "targetId": "order.order_cost",
+      "source": "revise",
+      "summary": "Column main.orders.order_cost belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.order_items_subtotal",
+      "targetId": "order.order_items_subtotal",
+      "source": "revise",
+      "summary": "Column main.orders.order_items_subtotal belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.count_food_items",
+      "targetId": "order.count_food_items",
+      "source": "revise",
+      "summary": "Column main.orders.count_food_items belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.count_drink_items",
+      "targetId": "order.count_drink_items",
+      "source": "revise",
+      "summary": "Column main.orders.count_drink_items belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.count_order_items",
+      "targetId": "order.count_order_items",
+      "source": "revise",
+      "summary": "Column main.orders.count_order_items belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.is_food_order",
+      "targetId": "order.is_food_order",
+      "source": "revise",
+      "summary": "Column main.orders.is_food_order belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.is_drink_order",
+      "targetId": "order.is_drink_order",
+      "source": "revise",
+      "summary": "Column main.orders.is_drink_order belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:order.customer_order_number",
+      "targetId": "order.customer_order_number",
+      "source": "revise",
+      "summary": "Column main.orders.customer_order_number belongs to term order as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.product_id",
+      "targetId": "product.product_id",
+      "source": "revise",
+      "summary": "Column main.products.product_id belongs to term product as primary_key."
+    },
+    {
+      "evidenceId": "evidence:product.product_name",
+      "targetId": "product.product_name",
+      "source": "revise",
+      "summary": "Column main.products.product_name belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.product_type",
+      "targetId": "product.product_type",
+      "source": "revise",
+      "summary": "Column main.products.product_type belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.product_description",
+      "targetId": "product.product_description",
+      "source": "revise",
+      "summary": "Column main.products.product_description belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.product_price",
+      "targetId": "product.product_price",
+      "source": "revise",
+      "summary": "Column main.products.product_price belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.is_food_item",
+      "targetId": "product.is_food_item",
+      "source": "revise",
+      "summary": "Column main.products.is_food_item belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:product.is_drink_item",
+      "targetId": "product.is_drink_item",
+      "source": "revise",
+      "summary": "Column main.products.is_drink_item belongs to term product as attribute."
+    },
+    {
+      "evidenceId": "evidence:supply.supply_uuid",
+      "targetId": "supply.supply_uuid",
+      "source": "revise",
+      "summary": "Column main.supplies.supply_uuid belongs to term supply as primary_key."
+    },
+    {
+      "evidenceId": "evidence:supply.supply_id",
+      "targetId": "supply.supply_id",
+      "source": "revise",
+      "summary": "Column main.supplies.supply_id belongs to term supply as attribute."
+    },
+    {
+      "evidenceId": "evidence:supply.product_id",
+      "targetId": "supply.product_id",
+      "source": "revise",
+      "summary": "Column main.supplies.product_id belongs to term supply as foreign_key."
+    },
+    {
+      "evidenceId": "evidence:supply.supply_name",
+      "targetId": "supply.supply_name",
+      "source": "revise",
+      "summary": "Column main.supplies.supply_name belongs to term supply as attribute."
+    },
+    {
+      "evidenceId": "evidence:supply.supply_cost",
+      "targetId": "supply.supply_cost",
+      "source": "revise",
+      "summary": "Column main.supplies.supply_cost belongs to term supply as attribute."
+    },
+    {
+      "evidenceId": "evidence:supply.is_perishable_supply",
+      "targetId": "supply.is_perishable_supply",
+      "source": "revise",
+      "summary": "Column main.supplies.is_perishable_supply belongs to term supply as attribute."
+    },
+    {
+      "evidenceId": "evidence:customer_places_order",
+      "targetId": "customer_places_order",
+      "source": "revise",
+      "summary": "Join observed between keys: main.customers.customer_id = main.orders.customer_id."
+    },
+    {
+      "evidenceId": "evidence:order_placed_at_location",
+      "targetId": "order_placed_at_location",
+      "source": "revise",
+      "summary": "Join observed between keys: main.orders.location_id = main.locations.location_id."
+    },
+    {
+      "evidenceId": "evidence:order_contains_order_item",
+      "targetId": "order_contains_order_item",
+      "source": "revise",
+      "summary": "Join observed between keys: main.orders.order_id = main.order_items.order_id."
+    },
+    {
+      "evidenceId": "evidence:order_item_for_product",
+      "targetId": "order_item_for_product",
+      "source": "revise",
+      "summary": "Join observed between keys: main.order_items.product_id = main.products.product_id."
+    },
+    {
+      "evidenceId": "evidence:supply_used_by_product",
+      "targetId": "supply_used_by_product",
+      "source": "revise",
+      "summary": "Join observed between keys: main.supplies.product_id = main.products.product_id."
+    },
+    {
+      "evidenceId": "evidence:order_occurs_on_calendar_day",
+      "targetId": "order_occurs_on_calendar_day",
+      "source": "revise",
+      "summary": "Join observed between keys: CAST(main.orders.ordered_at AS DATE) = main.metricflow_time_spine.date_day."
+    },
+    {
+      "evidenceId": "evidence:order_item_occurs_on_calendar_day",
+      "targetId": "order_item_occurs_on_calendar_day",
+      "source": "revise",
+      "summary": "Join observed between keys: CAST(main.order_items.ordered_at AS DATE) = main.metricflow_time_spine.date_day."
+    },
+    {
+      "evidenceId": "evidence:use_main_marts",
+      "targetId": "use_main_marts",
+      "source": "revise",
+      "summary": "Analyze from main marts. raw.* money columns are integer cents. Dollar amounts on main.orders (subtotal, tax_paid, order_total) are those cents divided by 100. Do not map terms onto raw.* or main.stg_*."
+    },
+    {
+      "evidenceId": "evidence:order_total_identity",
+      "targetId": "order_total_identity",
+      "source": "revise",
+      "summary": "main.orders.order_total = main.orders.subtotal + main.orders.tax_paid."
+    },
+    {
+      "evidenceId": "evidence:order_items_subtotal_identity",
+      "targetId": "order_items_subtotal_identity",
+      "source": "revise",
+      "summary": "main.orders.order_items_subtotal = main.orders.subtotal."
+    },
+    {
+      "evidenceId": "evidence:lifetime_spend_identity",
+      "targetId": "lifetime_spend_identity",
+      "source": "revise",
+      "summary": "main.customers.lifetime_spend = main.customers.lifetime_spend_pretax + main.customers.lifetime_tax_paid."
+    },
+    {
+      "evidenceId": "evidence:product_type_vocabulary",
+      "targetId": "product_type_vocabulary",
+      "source": "revise",
+      "summary": "main.products.product_type is only jaffle or beverage. is_food_item is true exactly when product_type is jaffle. is_drink_item is true exactly when product_type is beverage."
+    },
+    {
+      "evidenceId": "evidence:customer_type_status",
+      "targetId": "customer_type_status",
+      "source": "revise",
+      "summary": "main.customers.customer_type is only new or returning. new means count_lifetime_orders = 1. It is a status computed from orders, not a kind of person."
+    },
+    {
+      "evidenceId": "evidence:supply_cost_no_double_count",
+      "targetId": "supply_cost_no_double_count",
+      "source": "revise",
+      "summary": "main.order_items.supply_cost and main.orders.order_cost already sum supplies for the product. Do not add them again to main.supplies.supply_cost."
+    },
+    {
+      "evidenceId": "evidence:calendar_spine_not_events",
+      "targetId": "calendar_spine_not_events",
+      "source": "revise",
+      "summary": "main.metricflow_time_spine.date_day is a calendar from 2000-01-01 through 2029-12-31, not a table of business events."
+    }
+  ]
+}
