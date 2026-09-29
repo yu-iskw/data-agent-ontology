@@ -87,7 +87,8 @@ export const STORE_FORMAT = 'data-agent-ontology/store@1';
 
 /** JSON form of the whole store. Each revision is written once and listed by every version sharing it. */
 export interface StoreJson {
-  format: typeof STORE_FORMAT;
+  /** `STORE_FORMAT` when written by this package; checked on load because files may come from elsewhere. */
+  format: string;
   activeVersionId: string | null;
   revisions: {
     revisionId: string;
@@ -126,9 +127,13 @@ export class OntologyStore {
 
   constructor(private readonly now: () => Date = () => new Date()) {}
 
+  get activeVersion(): Version | null {
+    return this.activeVersionId === null ? null : this.stored(this.activeVersionId).version;
+  }
+
   static fromJSON(json: StoreJson, now?: () => Date): OntologyStore {
     if (json.format !== STORE_FORMAT) {
-      throw new Error(`Unsupported store format: ${String(json.format)}`);
+      throw new Error(`Unsupported store format: ${json.format}`);
     }
     const store = new OntologyStore(now);
     const shared = new Map(
@@ -151,10 +156,6 @@ export class OntologyStore {
       ...[...shared.keys()].map((id) => Number(id.slice(1)) || 0),
     );
     return store;
-  }
-
-  get activeVersion(): Version | null {
-    return this.activeVersionId === null ? null : this.stored(this.activeVersionId).version;
   }
 
   listVersions(): Version[] {

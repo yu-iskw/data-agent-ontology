@@ -249,7 +249,7 @@ describe('JSON store', () => {
   });
 
   it('rejects an unknown format', () => {
-    const json = { ...seeded().store.toJSON(), format: 'other' } as unknown as StoreJson;
+    const json: StoreJson = { ...seeded().store.toJSON(), format: 'other' };
     expect(() => OntologyStore.fromJSON(json)).toThrow('Unsupported store format');
   });
 });
