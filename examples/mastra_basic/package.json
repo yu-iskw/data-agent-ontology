@@ -16,7 +16,7 @@
   "dependencies": {
     "@data-agent-ontology/ontology-core": "workspace:*",
     "@duckdb/node-api": "1.5.5-r.5",
-    "@mastra/core": "^1.67.0",
+    "@mastra/core": "^1.71.0",
     "zod": "^4.6.5"
   }
 }
