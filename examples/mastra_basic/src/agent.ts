@@ -33,9 +33,11 @@ Domains
   analyst would type when asking about those tables rather than the name of a department or
   function. Keep the principal table's name when that name is already the business name and that
   table is the only analysis-ready table in the domain; do not replace it with a synonym. A
-  domain that holds two peer tables must not be named after only one of those tables: name the
-  shared concept, not either table. Those peer tables stay in that one domain. Do not give each
-  peer table its own domain. Never use catch-all names such as utilities, misc, shared,
+  line table, whose rows exist only inside a parent document, is not a peer of that document.
+  Keep the line table in the document table's domain, and keep that domain named for the document
+  table. Do not rename that domain to a broader synonym. Peer tables are tables at the same grain,
+  such as a thing and the components that supply it. Those peers stay in one domain, named for the
+  kind of thing they are, not for either table. Never use catch-all names such as utilities, misc, shared,
   common, or core.
 - Use short snake_case ids and title-case names.
 
