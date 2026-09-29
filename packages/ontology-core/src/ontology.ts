@@ -25,7 +25,7 @@ function visibleSorted<T extends Lifecycle>(records: T[], id: (record: T) => str
   return records.filter(isVisible).sort(byId(id));
 }
 
-/** The five core operations of RFC section 5 over one in-memory store. */
+/** The five core operations of RFC section 5 over one Ladybug store. */
 export class Ontology {
   readonly store: OntologyStore;
 
