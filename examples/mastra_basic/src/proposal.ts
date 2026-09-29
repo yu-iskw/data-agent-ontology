@@ -53,6 +53,17 @@ export const proposalSchema = z.object({
       evidence,
     }),
   ),
+  analysisLayer: z
+    .object({
+      termId: z.string().describe('The term whose table holds the converted money columns'),
+      text: z
+        .string()
+        .describe(
+          'Which layer to analyze from, and a formula over schema.table.column names that converts each source money unit to the analysis-ready unit',
+        ),
+      evidence,
+    })
+    .describe('Required layer and unit rule; it becomes one constraint'),
 });
 
 export type Proposal = z.infer<typeof proposalSchema>;
@@ -161,11 +172,9 @@ export function toRevisePatch(
       join: relation.join,
       evidence: relation.evidence,
     })),
-    constraints: proposal.constraints.map(({ termId, text, evidence: summary }) => ({
-      termId,
-      text,
-      evidence: summary,
-    })),
+    constraints: [...proposal.constraints, proposal.analysisLayer].map(
+      ({ termId, text, evidence: summary }) => ({ termId, text, evidence: summary }),
+    ),
   };
   return { patch, problems };
 }

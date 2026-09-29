@@ -64,9 +64,10 @@ Relations
 - Write the join with fully qualified schema.table.column references and run it to check it.
 
 Constraints
-- Record the rules an analyst needs to get correct numbers. Check each one with SQL. Look for:
-  - which layer to analyze from, and the units of source money columns compared with the
-    analysis-ready columns, written as a conversion formula;
+- Always fill analysisLayer: which layer to analyze from, and a formula that converts each
+  source money column's unit into the unit of the matching analysis-ready column. Check the
+  formula with SQL.
+- Record the other rules an analyst needs to get correct numbers. Check each one with SQL. Look for:
   - arithmetic identities between columns, written as formulas;
   - closed vocabularies of categorical columns and the flags derived from them;
   - how status columns are derived;

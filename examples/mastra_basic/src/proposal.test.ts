@@ -85,6 +85,11 @@ const PROPOSAL: Proposal = {
     },
   ],
   constraints: [{ termId: 'widget', text: 'price is in dollars.', evidence: 'Checked.' }],
+  analysisLayer: {
+    termId: 'widget',
+    text: 'Analyze from mart. mart.widgets.price = source price in cents / 100.',
+    evidence: 'Checked with SQL.',
+  },
 };
 
 describe('toRevisePatch', () => {
@@ -107,6 +112,9 @@ describe('toRevisePatch', () => {
       ['mart.makers', ['makers']],
       ['mart.widgets', ['goods']],
     ]);
+    expect(ontology.snapshot().constraints.map((c) => c.text)).toEqual(
+      expect.arrayContaining([PROPOSAL.constraints[0]?.text, PROPOSAL.analysisLayer.text]),
+    );
   });
 
   it('rejects a plural table name reused as the term id', () => {
