@@ -14,6 +14,10 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ladybugdb/core": "0.20.4"
   }
 }
