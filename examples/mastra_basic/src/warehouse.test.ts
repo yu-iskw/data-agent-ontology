@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createOntologyAgent } from './agent.js';
+import { createOntologyAgent, DEFAULT_MODEL } from './agent.js';
 import { createRunSqlTool } from './sql-tool.js';
 import { Warehouse } from './warehouse.js';
 
@@ -26,6 +26,33 @@ describe('Warehouse', () => {
     ]);
   });
 
+  it('returns every row of a small result and keeps aggregates', async () => {
+    const rows = await warehouse.query('SELECT i FROM range(5) t(i)', 10);
+    expect(rows.rows).toHaveLength(5);
+    expect(rows.rowCount).toBe(5);
+    expect(rows.truncated).toBe(false);
+    const aggregate = await warehouse.query('SELECT count(*) AS n FROM range(1000)');
+    expect(aggregate).toMatchObject({ rows: [{ n: '1000' }], rowCount: 1, truncated: false });
+  });
+
+  it('stops a finite read at maxRows and still marks a longer result truncated', async () => {
+    const capped = await warehouse.query('SELECT i FROM range(10) t(i)', 3);
+    expect(capped.rows).toHaveLength(3);
+    expect(capped.rowCount).toBe(10);
+    expect(capped.truncated).toBe(true);
+
+    const huge = await warehouse.query('SELECT i FROM range(5000) t(i)', 10);
+    expect(huge.rows).toHaveLength(10);
+    expect(huge.truncated).toBe(true);
+    expect(huge.rowCount).toBeGreaterThan(10);
+    expect(huge.rowCount).toBeLessThan(5000);
+
+    const all = await warehouse.query('SELECT i FROM range(250) t(i)', Number.MAX_SAFE_INTEGER);
+    expect(all.rows).toHaveLength(250);
+    expect(all.rowCount).toBe(250);
+    expect(all.truncated).toBe(false);
+  });
+
   it.each([
     ["SELECT * FROM read_text('package.json')", 'file system operations are disabled'],
     ["SELECT * FROM read_csv('package.json')", 'file system operations are disabled'],
@@ -43,7 +70,27 @@ describe('Warehouse', () => {
 describe('run_sql tool', () => {
   it('is the only tool the agent has', async () => {
     const agent = createOntologyAgent(warehouse, { model: 'openai/gpt-5.5' });
+    expect(agent.model).toBe('openai/gpt-5.5');
     expect(Object.keys(await agent.listTools())).toEqual(['run_sql']);
+  });
+
+  it('opens the suffix of a google-vertex id and leaves the api key unset', () => {
+    const previous = process.env.GOOGLE_VERTEX_API_KEY;
+    process.env.GOOGLE_VERTEX_API_KEY = 'express-key';
+    try {
+      expect(DEFAULT_MODEL).toBe('google-vertex/gemini-3.8-flash');
+      const chosen = createOntologyAgent(warehouse, { model: 'google-vertex/gemini-2.5-pro' });
+      expect(chosen.model).toMatchObject({ modelId: 'gemini-2.5-pro' });
+      const fallback = createOntologyAgent(warehouse);
+      expect(fallback.model).toMatchObject({ modelId: 'gemini-3.8-flash' });
+      expect(process.env.GOOGLE_VERTEX_API_KEY).toBeUndefined();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.GOOGLE_VERTEX_API_KEY;
+      } else {
+        process.env.GOOGLE_VERTEX_API_KEY = previous;
+      }
+    }
   });
 
   it('returns errors to the agent instead of throwing', async () => {

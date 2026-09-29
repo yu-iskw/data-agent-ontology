@@ -80,6 +80,54 @@ describe('compareOntologies', () => {
     );
   });
 
+  it('reports a second relation on the same columns as unexpected', () => {
+    const doc = copy();
+    const places = doc.relations.find((r) => r.name === 'places');
+    if (!places) {
+      throw new Error('answer is missing the customer relation');
+    }
+    doc.relations.push({ ...places, relationId: `${places.relationId}_extra`, name: 'also_links' });
+    const report = compareOntologies(answer, doc);
+    expect(report.hard.filter((f) => f.area === 'relations')).toEqual([
+      expect.objectContaining({
+        detail: 'unexpected',
+        key: expect.stringContaining('#2') as string,
+      }),
+    ]);
+    expect(report.match).toBe(false);
+  });
+
+  it('does not file a failed calendar-date join as an allowed difference', () => {
+    const doc = copy();
+    const occurs = doc.relations.find((r) => r.relationId === 'order_occurs_on_calendar_day');
+    if (!occurs) {
+      throw new Error('answer is missing the calendar relation');
+    }
+    occurs.join = 'main.orders.ordered_at = main.metricflow_time_spine.date_day';
+    const report = compareOntologies(answer, doc);
+    expect(report.hard.map((f) => f.detail)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('join must use the calendar date') as string,
+      ]),
+    );
+    expect(report.soft).toEqual([]);
+    expect(report.match).toBe(false);
+  });
+
+  it('allows CAST versus cast when the relation name stays the same', () => {
+    const doc = copy();
+    const occurs = doc.relations.find((r) => r.relationId === 'order_occurs_on_calendar_day');
+    if (!occurs) {
+      throw new Error('answer is missing the calendar relation');
+    }
+    occurs.join = 'cast(main.orders.ordered_at as date) = main.metricflow_time_spine.date_day';
+    const report = compareOntologies(answer, doc);
+    expect(report.hard).toEqual([]);
+    expect(report.match).toBe(true);
+    expect(report.soft.map((f) => f.detail)).toEqual([expect.stringContaining('join:') as string]);
+    expect(formatReport(report, 'a', 'b')).toContain('RESULT: MATCH');
+  });
+
   it('requires relation names, directions, and a calendar-date join', () => {
     const doc = copy();
     const occurs = doc.relations.find((r) => r.relationId === 'order_occurs_on_calendar_day')!;

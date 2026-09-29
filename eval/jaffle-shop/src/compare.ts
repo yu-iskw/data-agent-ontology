@@ -152,24 +152,45 @@ function compareSemantics(c: Collector, want: OntologyDocument, got: OntologyDoc
   c.keyed('mappings', keyBy(want.mappings, mappingKey(wn)), keyBy(got.mappings, mappingKey(gn)), {
     hard: (e, a) => differs('role', e.role, a.role),
   });
-  type RelationView = { name: string; from: string; to: string; join: string };
-  const relations = (doc: OntologyDocument, names: Names): Map<string, RelationView> =>
-    new Map(
-      doc.relations.map((r) => [
-        [names.column(r.fromColumnId), names.column(r.toColumnId)].sort().join(' = '),
-        { name: r.name, from: names.term(r.fromTermId), to: names.term(r.toTermId), join: r.join },
-      ]),
-    );
-  c.keyed('relations', relations(want, wn), relations(got, gn), {
+  c.keyed('relations', relationViews(want, wn), relationViews(got, gn), {
     hard: (e, a) => [
       ...differs('name', e.name, a.name),
       ...differs('direction', `${e.from} -> ${e.to}`, `${a.from} -> ${a.to}`),
-      ...(DATE_CAST.test(e.join) && !DATE_CAST.test(a.join)
-        ? [`join must use the calendar date: ${a.join}`]
-        : []),
+      ...(failsCalendarDate(e.join, a.join) ? [`join must use the calendar date: ${a.join}`] : []),
     ],
-    soft: (e, a) => differs('join', e.join, a.join),
+    soft: (e, a) => (failsCalendarDate(e.join, a.join) ? [] : differs('join', e.join, a.join)),
   });
+}
+
+interface RelationView {
+  name: string;
+  from: string;
+  to: string;
+  join: string;
+}
+
+function failsCalendarDate(expectedJoin: string, actualJoin: string): boolean {
+  return DATE_CAST.test(expectedJoin) && !DATE_CAST.test(actualJoin);
+}
+
+/** First relation on a column pair keeps that pair as its key. Later ones stay visible. */
+function relationViews(doc: OntologyDocument, names: Names): Map<string, RelationView> {
+  const views = new Map<string, RelationView>();
+  const seen = new Map<string, number>();
+  for (const relation of doc.relations) {
+    const columns = [names.column(relation.fromColumnId), names.column(relation.toColumnId)]
+      .sort()
+      .join(' = ');
+    const count = (seen.get(columns) ?? 0) + 1;
+    seen.set(columns, count);
+    views.set(count === 1 ? columns : `${columns} #${count}`, {
+      name: relation.name,
+      from: names.term(relation.fromTermId),
+      to: names.term(relation.toTermId),
+      join: relation.join,
+    });
+  }
+  return views;
 }
 
 function compareConstraints(c: Collector, want: OntologyDocument, got: OntologyDocument): void {

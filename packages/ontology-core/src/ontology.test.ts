@@ -176,6 +176,69 @@ describe('revise', () => {
     expect(ontology.store.get('mappings', 'order.name')).toBeUndefined();
   });
 
+  it('rejects a generated id that already holds a different record', () => {
+    const ontology = seeded();
+    const patch: RevisePatch = {
+      summary: 'collisions',
+      mappings: [{ termId: 'order', columnId: `${ORDERS}.order_id`, role: 'attribute' }],
+      relations: [
+        {
+          name: 'places',
+          fromTermId: 'customer',
+          toTermId: 'order',
+          fromColumnId: `${CUSTOMERS}.customer_id`,
+          toColumnId: `${ORDERS}.amount`,
+          join: 'customers.customer_id = orders.amount',
+        },
+      ],
+      constraints: [{ termId: 'order', text: 'Exclude cancelled orders!' }],
+    };
+    let problems: string[] = [];
+    try {
+      ontology.revise(patch);
+    } catch (error) {
+      expect(error).toBeInstanceOf(RevisionError);
+      if (error instanceof RevisionError) {
+        problems = error.problems;
+      }
+    }
+    expect(problems).toEqual(
+      expect.arrayContaining([
+        'Mapping id order.order_id already holds a different record',
+        'Relation id customer_places_order already holds a different record',
+        'Constraint id order:exclude_cancelled_orders already holds a different record',
+      ]),
+    );
+    expect(ontology.store.get('mappings', 'order.order_id')?.role).toBe('primary_key');
+    expect(ontology.store.get('relations', 'customer_places_order')?.toColumnId).toBe(
+      `${ORDERS}.customer_id`,
+    );
+    expect(ontology.store.get('constraints', 'order:exclude_cancelled_orders')?.text).toBe(
+      'Exclude cancelled orders.',
+    );
+  });
+
+  it('keeps the current id when the same record is proposed again', () => {
+    const ontology = seeded();
+    ontology.revise({
+      summary: 'again',
+      mappings: [
+        { termId: 'order', columnId: `${ORDERS}.customer_id`, role: 'foreign_key' },
+        { termId: 'order', columnId: `${ORDERS}.customer_id`, role: 'foreign_key' },
+      ],
+    });
+    expect(ontology.store.get('mappings', 'order.customer_id')).toMatchObject({
+      columnId: `${ORDERS}.customer_id`,
+      role: 'foreign_key',
+    });
+    ontology.revise({
+      summary: 'same',
+      mappings: SEMANTICS.mappings,
+      relations: SEMANTICS.relations,
+    });
+    expect(ontology.store.get('relations', 'customer_places_order')?.name).toBe('places');
+  });
+
   it('allows relations across domains and records revise evidence', () => {
     const ontology = seeded();
     const snapshot = ontology.snapshot();

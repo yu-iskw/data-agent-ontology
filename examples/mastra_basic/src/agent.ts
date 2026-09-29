@@ -8,6 +8,8 @@ import type { Warehouse } from './warehouse.js';
 /** Vertex publisher model `gemini-3.8-flash` on project ubie-yu-sandbox, location global. */
 export const DEFAULT_MODEL = 'google-vertex/gemini-3.8-flash';
 
+const VERTEX_PREFIX = 'google-vertex/';
+
 /**
  * Generic extraction method. It names no table, column, domain, or term of any particular
  * warehouse; everything specific must come from SQL against the database.
@@ -100,17 +102,17 @@ interface OntologyAgentOptions {
   onQuery?: (sql: string) => void;
 }
 
-/** Opens Gemini 3.8 Flash on Vertex with Application Default Credentials. */
-function vertexModel(): Agent['model'] {
+/** Opens the model id on Vertex with Application Default Credentials. */
+function vertexModel(modelId: string): Agent['model'] {
   delete process.env.GOOGLE_VERTEX_API_KEY;
-  return createVertex({ project: 'ubie-yu-sandbox', location: 'global' })('gemini-3.8-flash');
+  return createVertex({ project: 'ubie-yu-sandbox', location: 'global' })(modelId);
 }
 
 function resolveModel(model: string): Agent['model'] {
-  if (!model.startsWith('google-vertex/')) {
+  if (!model.startsWith(VERTEX_PREFIX)) {
     return model;
   }
-  return vertexModel();
+  return vertexModel(model.slice(VERTEX_PREFIX.length));
 }
 
 export function createOntologyAgent(

@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import { refreshDrift } from './submit.js';
 
 import type {
@@ -26,6 +28,25 @@ function slug(text: string): string {
     .replaceAll(/[^a-z0-9]+/g, '_')
     .replaceAll(/^_+|_+$/g, '')
     .slice(0, 48);
+}
+
+function holdsDifferentRecord(existing: object, next: object): boolean {
+  return !isDeepStrictEqual(existing, next);
+}
+
+/** Reports a problem when `id` already holds a different record. */
+function conflicts(
+  ctx: RevisionContext,
+  label: string,
+  id: string,
+  existing: object | undefined,
+  next: object,
+): boolean {
+  if (existing !== undefined && holdsDifferentRecord(existing, next)) {
+    ctx.problem(`${label} id ${id} already holds a different record`);
+    return true;
+  }
+  return false;
 }
 
 class RevisionContext {
@@ -121,14 +142,18 @@ function putMapping(ctx: RevisionContext, input: MappingInput): void {
     return;
   }
   const mappingId = input.mappingId ?? `${input.termId}.${column.name}`;
-  ctx.draft.put('mappings', mappingId, {
+  const mapping = {
     mappingId,
     termId: input.termId,
     columnId: input.columnId,
     role: input.role,
     active: true,
     drifted: false,
-  });
+  };
+  if (conflicts(ctx, 'Mapping', mappingId, ctx.draft.get('mappings', mappingId), mapping)) {
+    return;
+  }
+  ctx.draft.put('mappings', mappingId, mapping);
   ctx.cite(mappingId, input.evidence);
 }
 
@@ -144,7 +169,7 @@ function putRelation(ctx: RevisionContext, input: RelationInput): void {
     return;
   }
   const relationId = input.relationId ?? `${input.fromTermId}_${input.name}_${input.toTermId}`;
-  ctx.draft.put('relations', relationId, {
+  const relation = {
     relationId,
     name: input.name,
     fromTermId: input.fromTermId,
@@ -154,7 +179,11 @@ function putRelation(ctx: RevisionContext, input: RelationInput): void {
     join: input.join,
     active: true,
     drifted: false,
-  });
+  };
+  if (conflicts(ctx, 'Relation', relationId, ctx.draft.get('relations', relationId), relation)) {
+    return;
+  }
+  ctx.draft.put('relations', relationId, relation);
   ctx.cite(relationId, input.evidence);
 }
 
@@ -164,13 +193,25 @@ function putConstraint(ctx: RevisionContext, input: ConstraintInput): void {
     return;
   }
   const constraintId = input.constraintId ?? `${input.termId}:${slug(input.text)}`;
-  ctx.draft.put('constraints', constraintId, {
+  const constraint = {
     constraintId,
     termId: input.termId,
     text: input.text,
     active: true,
     drifted: false,
-  });
+  };
+  if (
+    conflicts(
+      ctx,
+      'Constraint',
+      constraintId,
+      ctx.draft.get('constraints', constraintId),
+      constraint,
+    )
+  ) {
+    return;
+  }
+  ctx.draft.put('constraints', constraintId, constraint);
   ctx.cite(constraintId, input.evidence);
 }
 

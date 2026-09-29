@@ -41,13 +41,18 @@ export class Warehouse {
   }
 
   async query(sql: string, maxRows = 200): Promise<QueryResult> {
-    const reader = await this.connection.runAndReadAll(sql);
-    const rows = reader.getRowObjectsJson() as Record<string, unknown>[];
+    // observeWarehouse passes Number.MAX_SAFE_INTEGER when it needs every row.
+    const readAll = maxRows === Number.MAX_SAFE_INTEGER;
+    const reader = readAll
+      ? await this.connection.runAndReadAll(sql)
+      : await this.connection.streamAndReadUntil(sql, maxRows + 1);
+    const materialized = reader.getRowObjectsJson() as Record<string, unknown>[];
+    const truncated = !readAll && materialized.length > maxRows;
     return {
       columns: reader.columnNames(),
-      rows: rows.slice(0, maxRows),
-      rowCount: rows.length,
-      truncated: rows.length > maxRows,
+      rows: truncated ? materialized.slice(0, maxRows) : materialized,
+      rowCount: materialized.length,
+      truncated,
     };
   }
 
