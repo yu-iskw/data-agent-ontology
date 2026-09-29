@@ -1,0 +1,23 @@
+{
+  "name": "@data-agent-ontology/ontology-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-neutral client for the ontology: context for a question, advisory SQL checks, and a local in-process implementation.",
+  "keywords": [
+    "ontology",
+    "analytics-agent"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-core": "workspace:*"
+  }
+}

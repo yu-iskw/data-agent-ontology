@@ -103,6 +103,12 @@ importers:
 
   packages/common: {}
 
+  packages/ontology-client:
+    dependencies:
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../ontology-core
+
   packages/ontology-core:
     dependencies:
       '@ladybugdb/core':
