@@ -31,9 +31,11 @@ Domains
   tables an analyst would use together. Every analysis-ready table belongs to exactly one child domain.
 - Name a child domain for the business concept its tables describe, using the plain noun an
   analyst would type when asking about those tables rather than the name of a department or
-  function. Keep the principal table's name when that name is already the business name; do not
-  replace it with a synonym. A domain of peer tables is not named after only one of those tables.
-  Never use catch-all names such as utilities, misc, shared, common, or core.
+  function. Keep the principal table's name when that name is already the business name and that
+  table is the only analysis-ready table in the domain; do not replace it with a synonym. A
+  domain that holds two peer tables must not be named after only one of those tables: name the
+  shared concept, not either table. Never use catch-all names such as utilities, misc, shared,
+  common, or core.
 - Use short snake_case ids and title-case names.
 
 Terms
@@ -53,11 +55,14 @@ Terms
 
 Relations
 - Add one relation for each foreign key. Choose the direction, then name the relation for the
-  business event in short snake_case. The name may be a past participle plus a preposition, or a
-  prepositional phrase. It is not only a present-tense verb, and it is not a generic synonym
-  such as happened, occurred, includes, or is_used_for. On widgets, a booking is booked_at its
-  day, a widget row is for_part a part, a part is consumed_by the widget that uses it, and a
-  booking falls_on a calendar day.
+  business event of those two tables, in short snake_case. The name may be a past participle
+  plus a preposition, or a prepositional phrase. It is not only a present-tense verb, and it is
+  not a generic synonym such as happened, occurred, includes, or is_used_for. A relation name
+  comes from the two tables' own business event.
+- These illustration names describe a fictional widget workshop. They are not warehouse events,
+  and they must never be emitted: a widget booking is booked_at its day, a widget row is
+  for_part a part, a part is riveted_into the widget that holds it, and a booking is
+  stamped_upon a workshop calendar day.
 - Two kinds of term are the subject of the relation to the term that references them: a party
   (a person or organization), toward the records it creates, and a document, toward the lines
   that exist only inside it. Reference things such as sites, items for sale, their components,
