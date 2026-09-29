@@ -14,6 +14,7 @@
     "tsx": "^4.23.15"
   },
   "dependencies": {
+    "@ai-sdk/google-vertex": "^5.0.88",
     "@data-agent-ontology/ontology-core": "workspace:*",
     "@duckdb/node-api": "1.5.5-r.5",
     "@mastra/core": "^1.71.0",
