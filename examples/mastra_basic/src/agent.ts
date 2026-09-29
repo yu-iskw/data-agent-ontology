@@ -57,10 +57,13 @@ Terms
 
 Relations
 - Add one relation for each foreign key. Choose the direction, then name the relation for the
-  business event of those two tables, in short snake_case. The name may be a past participle
-  plus a preposition, or a prepositional phrase. It is not only a present-tense verb, and it is
-  not a generic synonym such as happened, occurred, includes, or is_used_for. A relation name
-  comes from the two tables' own business event. Do not build that name by rewriting a column name.
+  business event, in short snake_case. A party that creates a document uses a plain
+  present-tense verb, not a past participle. A document, toward the lines that exist only
+  inside it, uses the plain present-tense verb for a container and what is inside it, not a
+  past participle coined from the line table. A link to a date names when that event happens,
+  and must not be formed by rewriting the timestamp column. A link between a thing and a
+  component names the component's role in that thing. Do not use the generic stand-ins
+  happened or is_used_for.
 - These illustration names describe a fictional widget workshop. They are not warehouse events,
   and they must never be emitted: a widget booking is booked_at its day, a widget row is
   for_part a part, a part is riveted_into the widget that holds it, and a booking is
