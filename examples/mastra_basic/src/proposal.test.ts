@@ -122,6 +122,20 @@ describe('toRevisePatch', () => {
     ]);
   });
 
+  it('rejects a term id that equals a domain id', () => {
+    const clash: Proposal = {
+      ...PROPOSAL,
+      terms: [{ ...PROPOSAL.terms[1], termId: 'makers' }],
+      relations: [],
+      constraints: [],
+    };
+    const { problems } = toRevisePatch(clash, ontologyWithWidgets().snapshot());
+    expect(problems).toEqual([
+      'Term makers has the same id as a domain; term and domain ids must differ',
+      'Term makers reuses the plural table name; use the singular noun for one row',
+    ]);
+  });
+
   it('reports unknown tables and key columns as problems', () => {
     const broken: Proposal = {
       ...PROPOSAL,

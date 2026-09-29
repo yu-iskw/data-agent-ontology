@@ -27,14 +27,16 @@ Domains
 - Create one root domain whose id is the database name. It holds no tables.
 - Under it, create one child domain per business area. A child domain groups the analysis-ready
   tables an analyst would use together. Every analysis-ready table belongs to exactly one child domain.
-- Name a child domain for the business concept its tables describe. Never use catch-all names
-  such as utilities, misc, shared, common, or core.
+- Name a child domain for the business concept its tables describe, using the plain noun an
+  analyst would type when asking about those tables rather than the name of a department or
+  function. Never use catch-all names such as utilities, misc, shared, common, or core.
 - Use short snake_case ids and title-case names.
 
 Terms
 - Create one term per analysis-ready table, named for the table grain: answer "one row per what?"
-  with a singular noun. The termId is that noun in snake_case, never the table name. For example,
-  a table named widgets gets the term widget, and widget_parts gets widget_part.
+  with a singular noun. The termId is that noun in snake_case, never the table name and never a
+  domain id. For example, a table named widgets gets the term widget, and widget_parts gets
+  widget_part. For a date or calendar table, the noun names the unit of time one row covers.
 - Check the grain with count(*) against count(DISTINCT key).
 - The term belongs to the domain that holds its table.
 - primaryKey lists the unique, non-null key column. foreignKeys lists columns whose values are
@@ -43,7 +45,10 @@ Terms
 
 Relations
 - Add one relation for each foreign key. Choose the direction and a short snake_case verb phrase
-  so that "fromTermId name toTermId" reads as a true English sentence.
+  in the present tense so that "fromTermId name toTermId" reads as a true English sentence.
+- When one term owns the other, such as a person and the records that person creates, or a
+  document and its lines, the owner is the subject. Otherwise the term that holds the foreign key
+  is the subject.
 - Event tables are tables whose rows record something that happened at a time, such as a
   transaction or one line of a transaction. If a calendar or date table exists, relate each event
   table to it through the timestamp that records when the row happened, joining on the calendar

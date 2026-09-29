@@ -17,7 +17,10 @@ export const proposalSchema = z.object({
     z.object({
       domainId: z.string().describe('snake_case id'),
       name: z.string(),
-      parentDomainId: z.string().nullable(),
+      parentDomainId: z
+        .string()
+        .nullable()
+        .describe('null for the root domain; the root domain id for every other domain'),
       tables: z.array(z.string()).describe('schema.table paths that belong to this domain'),
     }),
   ),
@@ -100,6 +103,16 @@ function termMappings(
   }));
 }
 
+/** A term and a domain sharing an id would make `browse` hits ambiguous. */
+function idCollisions(proposal: Proposal): string[] {
+  const domainIds = new Set(proposal.domains.map((domain) => domain.domainId));
+  return proposal.terms
+    .filter((term) => domainIds.has(term.termId))
+    .map(
+      (term) => `Term ${term.termId} has the same id as a domain; term and domain ids must differ`,
+    );
+}
+
 /**
  * Expands a proposal into a revise patch. A term maps every column of its grain table;
  * key roles come from the agent. Unknown paths are returned as problems for the agent to fix.
@@ -109,7 +122,7 @@ export function toRevisePatch(
   snapshot: OntologySnapshot,
   engine: Engine = 'duckdb',
 ): PatchResult {
-  const problems: string[] = [];
+  const problems: string[] = idCollisions(proposal);
   const membership = new Map<string, string[]>();
   for (const domain of proposal.domains) {
     for (const path of domain.tables) {
