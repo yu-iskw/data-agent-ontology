@@ -66,7 +66,7 @@ pnpm format
 Extraction and grading run as two separate processes. The first writes `examples/mastra_basic/out/ontology.json`; the second reads it together with the answer files.
 
 ```bash
-export OPENAI_API_KEY=...
+# Application Default Credentials. Vertex project ubie-yu-sandbox, location global.
 pnpm example:extract
 pnpm eval:jaffle-shop
 ```

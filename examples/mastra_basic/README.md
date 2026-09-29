@@ -14,12 +14,12 @@ The agent instructions describe a generic extraction method. They name no table,
 ## Run
 
 ```bash
-export OPENAI_API_KEY=...   # or another provider key for --model
+# Application Default Credentials. No API key.
+# Vertex project ubie-yu-sandbox, location global.
 pnpm --filter @data-agent-ontology/example-mastra-basic extract
-pnpm --filter @data-agent-ontology/example-mastra-basic extract --out /tmp/ontology.json --model openai/gpt-5.4-mini
 ```
 
-`ONTOLOGY_AGENT_MODEL` also sets the model. The default is `openai/gpt-5.5`.
+`ONTOLOGY_AGENT_MODEL` also sets the model. The default is `google-vertex/gemini-3.8-flash`.
 
 ## Isolation
 

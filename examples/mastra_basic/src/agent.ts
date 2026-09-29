@@ -4,7 +4,11 @@ import { createRunSqlTool } from './sql-tool.js';
 
 import type { Warehouse } from './warehouse.js';
 
-export const DEFAULT_MODEL = 'openai/gpt-5.5';
+/** Vertex publisher model `gemini-3.8-flash` on project ubie-yu-sandbox, location global. */
+export const DEFAULT_MODEL = 'google-vertex/gemini-3.8-flash';
+
+const VERTEX_PROJECT = 'ubie-yu-sandbox';
+const VERTEX_LOCATION = 'global';
 
 /**
  * Generic extraction method. It names no table, column, domain, or term of any particular
@@ -90,15 +94,31 @@ interface OntologyAgentOptions {
   onQuery?: (sql: string) => void;
 }
 
+/**
+ * Points the Vertex provider at this example's project and location.
+ * Authentication is Application Default Credentials, not an API key.
+ */
+function useVertex(model: string): void {
+  if (!model.startsWith('google-vertex/')) {
+    return;
+  }
+  process.env.GOOGLE_VERTEX_PROJECT = VERTEX_PROJECT;
+  process.env.GOOGLE_VERTEX_LOCATION = VERTEX_LOCATION;
+  delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  delete process.env.GEMINI_API_KEY;
+}
+
 export function createOntologyAgent(
   warehouse: Warehouse,
   options: OntologyAgentOptions = {},
 ): Agent {
+  const model = options.model ?? DEFAULT_MODEL;
+  useVertex(model);
   return new Agent({
     id: 'ontology-agent',
     name: 'Ontology agent',
     instructions: ONTOLOGY_AGENT_INSTRUCTIONS,
-    model: options.model ?? DEFAULT_MODEL,
+    model,
     tools: { run_sql: createRunSqlTool(warehouse, options.onQuery) },
   });
 }
