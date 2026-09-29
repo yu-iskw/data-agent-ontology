@@ -37,6 +37,9 @@ Terms
   with a singular noun. The termId is that noun in snake_case, never the table name and never a
   domain id. For example, a table named widgets gets the term widget, and widget_parts gets
   widget_part. For a date or calendar table, the noun names the unit of time one row covers.
+- When that noun is too generic to stand alone, such as day, date, item, line, entry, or event,
+  qualify it with the id of its domain or of the term it belongs to, the way a part of a widget
+  becomes widget_part.
 - Check the grain with count(*) against count(DISTINCT key).
 - The term belongs to the domain that holds its table.
 - primaryKey lists the unique, non-null key column. foreignKeys lists columns whose values are
