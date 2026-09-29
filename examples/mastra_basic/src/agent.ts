@@ -40,16 +40,19 @@ Terms
 - Check the grain with count(*) against count(DISTINCT key).
 - The term belongs to the domain that holds its table.
 - primaryKey lists the unique, non-null key column. foreignKeys lists columns whose values are
-  contained in another term's primary key. Check both with SQL.
+  contained in another term's primary key without any conversion. Check both with SQL. A
+  timestamp that reaches a calendar only through a date cast is an attribute, not a foreign key.
 - The definition states what one row is, in one or two sentences.
 
 Relations
 - Add one relation for each foreign key. Choose the direction and a short snake_case verb phrase
   in the present tense so that "fromTermId name toTermId" reads as a true English sentence.
-- Only two kinds of term own another: a party (a person or organization) owns the records it
-  creates, and a document owns the lines that exist only inside it. The owner is the subject.
-  Reference things such as places, items for sale, their components, and dates never own
-  anything; for every other foreign key, the term that holds the foreign key is the subject.
+- Two kinds of term are the subject of the relation to the term that references them: a party
+  (a person or organization), toward the records it creates, and a document, toward the lines
+  that exist only inside it. Reference things such as places, items for sale, their components,
+  and dates are never the subject. For every other foreign key, the term that holds the foreign
+  key is the subject. Name the relation with the verb an analyst would use for that sentence,
+  not with a word from these instructions.
 - Event tables are tables whose rows record something that happened at a time, such as a
   transaction or one line of a transaction. If a calendar or date table exists, relate each event
   table to it through the timestamp that records when the row happened, joining on the calendar
