@@ -2,7 +2,8 @@ export { columnIdOf, isVisible, scopePathOf, tableIdOf } from './model.js';
 export { Ontology } from './ontology.js';
 export { MAX_BROWSE_HITS, MAX_RESOLVE_TERMS, ResolveLimitError } from './read.js';
 export { RevisionError } from './revise.js';
-export { OntologyStore, UnknownVersionError } from './store.js';
+export { OntologyStore, STORE_FORMAT, UnknownVersionError } from './store.js';
+export type { StoreJson } from './store.js';
 export { ScopeViolationError, SubmissionError } from './submit.js';
 
 export type {

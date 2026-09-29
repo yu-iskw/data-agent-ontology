@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -93,9 +93,16 @@ async function extractSemantics(
 }
 
 /* eslint-disable security/detect-non-literal-fs-filename -- the artifact path comes from --out */
-async function writeArtifact(out: string, snapshot: OntologySnapshot): Promise<void> {
+/** Writes the visible ontology to `out` and the whole versioned JSON store beside it. */
+async function writeArtifact(out: string, ontology: Ontology): Promise<OntologySnapshot> {
+  const snapshot = ontology.snapshot();
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out, `${JSON.stringify(snapshot, null, 2)}\n`);
+  await writeFile(
+    join(dirname(out), 'ontology-store.json'),
+    `${JSON.stringify(ontology.store.toJSON(), null, 2)}\n`,
+  );
+  return snapshot;
 }
 /* eslint-enable security/detect-non-literal-fs-filename */
 
@@ -118,8 +125,7 @@ async function main(): Promise<void> {
       },
     });
     await extractSemantics(agent, ontology, warehouse.databaseName);
-    const snapshot = ontology.snapshot();
-    await writeArtifact(out, snapshot);
+    const snapshot = await writeArtifact(out, ontology);
     console.log(
       `Wrote ${out}: ${snapshot.domains.length} domains, ${snapshot.tables.length} tables, ` +
         `${snapshot.terms.length} terms, ${snapshot.mappings.length} mappings, ` +

@@ -7,7 +7,7 @@ A [Mastra](https://mastra.ai/) data analytics agent that extracts an ontology fr
 1. `src/observe.ts` reads `information_schema` and submits a full-scope structural observation for every schema (RFC section 9).
 2. The agent in `src/agent.ts` investigates the data. Its only tool is `run_sql`, which runs read-only SQL against the DuckDB file.
 3. The agent returns a proposal of domains, terms, key columns, relations, and constraints. `src/proposal.ts` turns it into one `revise` patch. Each term maps every column of its grain table. If the ontology rejects the patch, the agent gets the problems and tries again.
-4. `src/extract.ts` writes the visible ontology to `out/ontology.json`.
+4. `src/extract.ts` writes the visible ontology to `out/ontology.json` and the whole versioned JSON store to `out/ontology-store.json`.
 
 The agent instructions describe a generic extraction method. They name no table, column, domain, or term of this warehouse.
 

@@ -83,8 +83,40 @@ export class Draft {
   }
 }
 
+export const STORE_FORMAT = 'data-agent-ontology/store@1';
+
+/** JSON form of the whole store. Each revision is written once and listed by every version sharing it. */
+export interface StoreJson {
+  format: typeof STORE_FORMAT;
+  activeVersionId: string | null;
+  revisions: {
+    revisionId: string;
+    kind: RecordKind;
+    id: string;
+    value: OntologyRecords[RecordKind];
+  }[];
+  versions: { version: Version; revisionIds: string[] }[];
+}
+
+function rebuildRecords(
+  revisionIds: string[],
+  shared: Map<string, Revision & { kind: RecordKind; id: string }>,
+): RecordTables {
+  const records = new Map<RecordKind, Map<string, Revision>>();
+  for (const revisionId of revisionIds) {
+    const revision = shared.get(revisionId);
+    if (!revision) {
+      throw new Error(`Store JSON lists unknown revision ${revisionId}`);
+    }
+    const table = records.get(revision.kind) ?? new Map<string, Revision>();
+    table.set(revision.id, revision);
+    records.set(revision.kind, table);
+  }
+  return records;
+}
+
 /**
- * In-memory versioned record store (RFC sections 12 and 13).
+ * Versioned record store (RFC sections 12 and 13), held in memory and saved as JSON.
  * Every commit creates an immutable version; rollback only moves the active pointer.
  */
 export class OntologyStore {
@@ -93,6 +125,33 @@ export class OntologyStore {
   private readonly versions = new Map<string, StoredVersion>();
 
   constructor(private readonly now: () => Date = () => new Date()) {}
+
+  static fromJSON(json: StoreJson, now?: () => Date): OntologyStore {
+    if (json.format !== STORE_FORMAT) {
+      throw new Error(`Unsupported store format: ${String(json.format)}`);
+    }
+    const store = new OntologyStore(now);
+    const shared = new Map(
+      json.revisions.map(({ revisionId, kind, id, value }) => [
+        revisionId,
+        { revisionId, kind, id, value: Object.freeze(structuredClone(value)) },
+      ]),
+    );
+    for (const { version, revisionIds } of json.versions) {
+      store.versions.set(version.versionId, {
+        version,
+        records: rebuildRecords(revisionIds, shared),
+      });
+    }
+    if (json.activeVersionId !== null) {
+      store.activate(json.activeVersionId);
+    }
+    store.revisionCounter = Math.max(
+      0,
+      ...[...shared.keys()].map((id) => Number(id.slice(1)) || 0),
+    );
+    return store;
+  }
 
   get activeVersion(): Version | null {
     return this.activeVersionId === null ? null : this.stored(this.activeVersionId).version;
@@ -142,6 +201,31 @@ export class OntologyStore {
     const target = this.stored(versionId);
     this.activeVersionId = versionId;
     return target.version;
+  }
+
+  toJSON(): StoreJson {
+    const revisions = new Map<string, StoreJson['revisions'][number]>();
+    const versions = [...this.versions.values()].map(({ version, records }) => {
+      const revisionIds: string[] = [];
+      for (const [kind, table] of records) {
+        for (const [id, revision] of table) {
+          revisions.set(revision.revisionId, {
+            revisionId: revision.revisionId,
+            kind,
+            id,
+            value: revision.value,
+          });
+          revisionIds.push(revision.revisionId);
+        }
+      }
+      return { version, revisionIds };
+    });
+    return {
+      format: STORE_FORMAT,
+      activeVersionId: this.activeVersionId,
+      revisions: [...revisions.values()],
+      versions,
+    };
   }
 
   private recordsOf(versionId?: string): RecordTables {

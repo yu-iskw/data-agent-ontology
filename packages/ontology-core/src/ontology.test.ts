@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { Ontology } from './ontology.js';
 import { ResolveLimitError } from './read.js';
 import { RevisionError } from './revise.js';
-import { UnknownVersionError } from './store.js';
+import { OntologyStore, UnknownVersionError } from './store.js';
 import { ScopeViolationError } from './submit.js';
 
 import type { Completeness, RevisePatch, Submission, TableObservation } from './model.js';
+import type { StoreJson } from './store.js';
 
 const SCOPE = 'proj.sales';
 const ORDERS = 'bigquery:proj.sales.orders';
@@ -219,5 +220,36 @@ describe('rollback', () => {
 
   it('rejects an unknown version', () => {
     expect(() => seeded().rollback('v999')).toThrow(UnknownVersionError);
+  });
+});
+
+describe('JSON store', () => {
+  it('restores versions, shared revisions, and the active pointer', () => {
+    const ontology = seeded();
+    ontology.submitScope(submission('partial', { orders: ['order_id'] }));
+    ontology.rollback('v2');
+    const json = JSON.parse(JSON.stringify(ontology.store.toJSON())) as StoreJson;
+    const restored = new Ontology(OntologyStore.fromJSON(json));
+    expect(restored.snapshot()).toEqual(ontology.snapshot());
+    expect(restored.store.listVersions()).toEqual(ontology.store.listVersions());
+    expect(restored.store.revisionIdOf('terms', 'order', 'v3')).toBe(
+      restored.store.revisionIdOf('terms', 'order', 'v2'),
+    );
+    expect(json.revisions.length).toBeLessThan(
+      json.versions.reduce((sum, v) => sum + v.revisionIds.length, 0),
+    );
+    const next = restored.revise({
+      ...SEMANTICS,
+      constraints: [{ termId: 'order', text: 'New.' }],
+    });
+    expect(next).toMatchObject({ versionId: 'v4', parentVersionId: 'v2' });
+    expect(restored.store.revisionIdOf('constraints', 'order:new', 'v4')).not.toBe(
+      restored.store.revisionIdOf('terms', 'order', 'v2'),
+    );
+  });
+
+  it('rejects an unknown format', () => {
+    const json = { ...seeded().store.toJSON(), format: 'other' } as unknown as StoreJson;
+    expect(() => OntologyStore.fromJSON(json)).toThrow('Unsupported store format');
   });
 });
