@@ -36,7 +36,7 @@ Domains
   line table, whose rows exist only inside a parent document, is not a peer of that document.
   Keep the line table in the document table's domain, and keep that domain named for the document
   table. Do not rename that domain to a broader synonym. Peer tables are tables at the same grain,
-  such as a thing and the components that supply it. Those peers stay in one domain, named for the business area they serve together, the list of what the company offers and the parts that go into it, not for either table and not for a synonym of either table. Never use catch-all names such as utilities, misc, shared,
+  such as a thing and the components that supply it. Those peers stay in one domain, named with the ordinary retail word for a company's list of goods for sale, including the parts that go into those goods. Do not use a restaurant word such as menu. Do not name it for either table and do not use a synonym of either table. Never use catch-all names such as utilities, misc, shared,
   common, or core.
 - Use short snake_case ids and title-case names.
 
