@@ -34,7 +34,8 @@ Domains
   function. Keep the principal table's name when that name is already the business name and that
   table is the only analysis-ready table in the domain; do not replace it with a synonym. A
   domain that holds two peer tables must not be named after only one of those tables: name the
-  shared concept, not either table. Never use catch-all names such as utilities, misc, shared,
+  shared concept, not either table. Those peer tables stay in that one domain. Do not give each
+  peer table its own domain. Never use catch-all names such as utilities, misc, shared,
   common, or core.
 - Use short snake_case ids and title-case names.
 
@@ -58,7 +59,7 @@ Relations
   business event of those two tables, in short snake_case. The name may be a past participle
   plus a preposition, or a prepositional phrase. It is not only a present-tense verb, and it is
   not a generic synonym such as happened, occurred, includes, or is_used_for. A relation name
-  comes from the two tables' own business event.
+  comes from the two tables' own business event. Do not build that name by rewriting a column name.
 - These illustration names describe a fictional widget workshop. They are not warehouse events,
   and they must never be emitted: a widget booking is booked_at its day, a widget row is
   for_part a part, a part is riveted_into the widget that holds it, and a booking is
