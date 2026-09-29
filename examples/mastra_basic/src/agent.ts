@@ -46,9 +46,10 @@ Terms
 Relations
 - Add one relation for each foreign key. Choose the direction and a short snake_case verb phrase
   in the present tense so that "fromTermId name toTermId" reads as a true English sentence.
-- When one term owns the other, such as a person and the records that person creates, or a
-  document and its lines, the owner is the subject. Otherwise the term that holds the foreign key
-  is the subject.
+- Only two kinds of term own another: a party (a person or organization) owns the records it
+  creates, and a document owns the lines that exist only inside it. The owner is the subject.
+  Reference things such as places, items for sale, their components, and dates never own
+  anything; for every other foreign key, the term that holds the foreign key is the subject.
 - Event tables are tables whose rows record something that happened at a time, such as a
   transaction or one line of a transaction. If a calendar or date table exists, relate each event
   table to it through the timestamp that records when the row happened, joining on the calendar
