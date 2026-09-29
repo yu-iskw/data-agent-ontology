@@ -108,7 +108,11 @@ async function writeArtifact(out: string, ontology: Ontology): Promise<OntologyS
 
 async function main(): Promise<void> {
   const { values } = parseArgs({
-    options: { out: { type: 'string' }, model: { type: 'string' } },
+    options: {
+      out: { type: 'string' },
+      model: { type: 'string' },
+      'scope-only': { type: 'boolean', default: false },
+    },
   });
   const out = resolve(values.out ?? DEFAULT_OUT);
   const model = values.model ?? process.env.ONTOLOGY_AGENT_MODEL ?? DEFAULT_MODEL;
@@ -116,6 +120,11 @@ async function main(): Promise<void> {
   try {
     const ontology = new Ontology();
     ontology.submitScope(await observeWarehouse(warehouse));
+    if (values['scope-only']) {
+      const observed = await writeArtifact(out, ontology);
+      console.log(`Wrote ${out}: structure only, ${observed.tables.length} tables, no semantics`);
+      return;
+    }
     let queries = 0;
     const agent = createOntologyAgent(warehouse, {
       model,
