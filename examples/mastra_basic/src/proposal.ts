@@ -82,6 +82,12 @@ function termMappings(
   if (columns.length === 0) {
     problems.push(`Term ${term.termId} names table ${term.table}, which has no observed columns`);
   }
+  const tableName = term.table.slice(term.table.lastIndexOf('.') + 1);
+  if (term.termId === tableName && tableName.endsWith('s')) {
+    problems.push(
+      `Term ${term.termId} reuses the plural table name; use the singular noun for one row`,
+    );
+  }
   const names = new Set(columns.map((column) => column.name));
   for (const key of [...term.primaryKey, ...term.foreignKeys].filter((k) => !names.has(k))) {
     problems.push(`Term ${term.termId} key column ${key} is not a column of ${term.table}`);

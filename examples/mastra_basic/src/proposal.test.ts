@@ -109,6 +109,19 @@ describe('toRevisePatch', () => {
     ]);
   });
 
+  it('rejects a plural table name reused as the term id', () => {
+    const plural: Proposal = {
+      ...PROPOSAL,
+      terms: [{ ...PROPOSAL.terms[0], termId: 'widgets' }],
+      relations: [],
+      constraints: [],
+    };
+    const { problems } = toRevisePatch(plural, ontologyWithWidgets().snapshot());
+    expect(problems).toEqual([
+      'Term widgets reuses the plural table name; use the singular noun for one row',
+    ]);
+  });
+
   it('reports unknown tables and key columns as problems', () => {
     const broken: Proposal = {
       ...PROPOSAL,
