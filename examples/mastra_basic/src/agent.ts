@@ -29,7 +29,9 @@ Domains
   tables an analyst would use together. Every analysis-ready table belongs to exactly one child domain.
 - Name a child domain for the business concept its tables describe, using the plain noun an
   analyst would type when asking about those tables rather than the name of a department or
-  function. Never use catch-all names such as utilities, misc, shared, common, or core.
+  function. Keep the principal table's name when that name is already the business name; do not
+  replace it with a synonym. A domain of peer tables is not named after only one of those tables.
+  Never use catch-all names such as utilities, misc, shared, common, or core.
 - Use short snake_case ids and title-case names.
 
 Terms
@@ -48,14 +50,18 @@ Terms
 - The definition states what one row is, in one or two sentences.
 
 Relations
-- Add one relation for each foreign key. Choose the direction and a short snake_case verb phrase
-  in the present tense so that "fromTermId name toTermId" reads as a true English sentence.
+- Add one relation for each foreign key. Choose the direction, then name the relation for the
+  business event in short snake_case. The name may be a past participle plus a preposition, or a
+  prepositional phrase. It is not only a present-tense verb, and it is not a generic synonym
+  such as happened, occurred, includes, or is_used_for. On widgets, a booking is booked_at its
+  day, a widget row is for_part a part, a part is consumed_by the widget that uses it, and a
+  booking falls_on a calendar day.
 - Two kinds of term are the subject of the relation to the term that references them: a party
   (a person or organization), toward the records it creates, and a document, toward the lines
-  that exist only inside it. Reference things such as places, items for sale, their components,
+  that exist only inside it. Reference things such as sites, items for sale, their components,
   and dates are never the subject. For every other foreign key, the term that holds the foreign
-  key is the subject. Name the relation with the verb an analyst would use for that sentence,
-  not with a word from these instructions.
+  key is the subject. Name the relation for that business event, not with a word from these
+  instructions.
 - Event tables are tables whose rows record something that happened at a time, such as a
   transaction or one line of a transaction. If a calendar or date table exists, relate each event
   table to it through the timestamp that records when the row happened, joining on the calendar
