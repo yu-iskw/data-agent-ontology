@@ -25,7 +25,7 @@ Optional: prefetch Trunk’s hermetic tools (helpful for offline work or CI imag
 pnpm exec trunk install
 ```
 
-If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/references/cli/getting-started/install) (e.g. `brew install trunk-io` on macOS).
+If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/code-quality/overview/getting-started/install) (e.g. `brew install trunk-io` on macOS).
 
 ### Supply-chain protections
 
