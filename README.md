@@ -25,7 +25,7 @@ Optional: prefetch Trunk’s hermetic tools (helpful for offline work or CI imag
 pnpm exec trunk install
 ```
 
-If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/references/cli/getting-started/install) (e.g. `brew install trunk-io` on macOS).
+If you prefer a global `trunk` on your PATH, see the [Trunk installation guide](https://docs.trunk.io/code-quality/overview/getting-started/install) (e.g. `brew install trunk-io` on macOS).
 
 ### Supply-chain protections
 
@@ -54,8 +54,22 @@ pnpm format
 
 ## Project Structure
 
+- `docs/rfc/`: Design documents, including the ontology service RFC
 - `packages/`: Monorepo packages
   - `common/`: Shared utilities and types
+  - `ontology-core/`: Deterministic ontology core (versioned store, `browse`, `resolve`, `submitScope`, `revise`, `rollback`)
+- `examples/mastra_basic/`: Mastra data analytics agent that extracts an ontology from a local DuckDB warehouse
+- `eval/jaffle-shop/`: Evaluator and answer set for that example; the example never imports it
+
+### Ontology extraction loop
+
+Extraction and grading run as two separate processes. The first writes `examples/mastra_basic/out/ontology.json`; the second reads it together with the answer files.
+
+```bash
+# Application Default Credentials. Vertex project ubie-yu-sandbox, location global.
+pnpm example:extract
+pnpm eval:jaffle-shop
+```
 
 ## License
 

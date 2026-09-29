@@ -151,3 +151,6 @@ TODO.md
 # CodeQL local artifacts
 .codeql_db/
 codeql-results.sarif
+
+# Ontology artifacts written by examples
+examples/*/out/

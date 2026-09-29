@@ -1,5 +1,7 @@
 packages:
   - packages/*
+  - examples/*
+  - eval/*
 
 # Supply-chain protection - minimumReleaseAge is 7 days (10080 min), stricter than pnpm 11 default of 1 day.
 # https://pnpm.io/blog/releases/11.0
@@ -25,6 +27,10 @@ minimumReleaseAgeExclude:
   - '@vitest/mocker'
   - browserslist
   - baseline-browser-mapping
+  # The Mastra example tracks the latest @mastra/core release by request; these exact
+  # versions are younger than 7 days when adopted.
+  - '@mastra/core@1.71.0'
+  - '@mastra/schema-compat@1.3.11'
 
 overrides:
   # GHSA-r292-9mhp-454m fixed in 7.5.21+

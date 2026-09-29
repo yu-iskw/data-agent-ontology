@@ -3,3 +3,5 @@ dist
 coverage
 .trunk
 pnpm-lock.yaml
+# Answer sets are kept byte-identical to their source
+eval/*/answer

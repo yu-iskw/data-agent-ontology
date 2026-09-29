@@ -31,7 +31,7 @@ const importXSettings = {
   'import-x/resolver': {
     typescript: {
       alwaysTryTypes: true,
-      project: ['packages/*/tsconfig.json'],
+      project: ['packages/*/tsconfig.json', 'examples/*/tsconfig.json', 'eval/*/tsconfig.json'],
     },
     node: true,
   },
@@ -49,6 +49,13 @@ const importXRules = {
     },
   ],
   'import-x/no-cycle': ['error', { maxDepth: 3 }],
+  // Examples must never reach the evaluator or its answer files.
+  'import-x/no-restricted-paths': [
+    'error',
+    {
+      zones: [{ target: './examples', from: './eval', message: 'Examples must not import eval/.' }],
+    },
+  ],
 };
 
 /**
@@ -114,7 +121,7 @@ export default [
     ],
   },
   {
-    files: ['packages/**/*.config.ts'],
+    files: ['{packages,examples,eval}/**/*.config.ts'],
     ignores: ['**/dist/**'],
     languageOptions: {
       parser: tsparser,
@@ -141,7 +148,7 @@ export default [
     },
   },
   {
-    files: ['packages/**/*.ts', 'packages/**/*.tsx'],
+    files: ['{packages,examples,eval}/**/*.ts', '{packages,examples,eval}/**/*.tsx'],
     ignores: ['**/dist/**', '**/*.config.ts', '**/*.test.ts', '**/*.test.tsx'],
     languageOptions: {
       parser: tsparser,
@@ -167,7 +174,7 @@ export default [
     },
   },
   {
-    files: ['packages/**/*.test.ts', 'packages/**/*.test.tsx'],
+    files: ['{packages,examples,eval}/**/*.test.ts', '{packages,examples,eval}/**/*.test.tsx'],
     ignores: ['**/dist/**'],
     languageOptions: {
       parser: tsparser,
