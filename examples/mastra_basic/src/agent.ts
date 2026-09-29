@@ -61,8 +61,11 @@ Relations
   present-tense verb, not a past participle. A document, toward the lines that exist only
   inside it, uses the plain present-tense verb for a container and what is inside it, not a
   past participle coined from the line table. A link to a date names when that event happens,
-  and must not be formed by rewriting the timestamp column. A link between a thing and a
-  component names the component's role in that thing. Do not use the generic stand-ins
+  and must not be formed by rewriting the timestamp column. A line that points at the good
+  it sells uses a short preposition plus the kind of thing that foreign key means. Do not
+  take that name from the parent document or from either table. A good that points at a
+  component going into it uses a short passive verb for how that component serves the good.
+  Do not take that name from either table. Do not use the generic stand-ins
   happened or is_used_for.
 - These illustration names describe a fictional widget workshop. They are not warehouse events,
   and they must never be emitted: a widget booking is booked_at its day, a widget row is
