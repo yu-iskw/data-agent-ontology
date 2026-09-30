@@ -115,6 +115,22 @@ importers:
         specifier: 0.20.4
         version: 0.20.4
 
+  packages/ontology-server:
+    dependencies:
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../ontology-client
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../ontology-core
+    devDependencies:
+      '@ladybugdb/core':
+        specifier: 0.20.4
+        version: 0.20.4
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
 packages:
 
   '@a2a-js/sdk@0.3.14':

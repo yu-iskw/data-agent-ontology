@@ -1,5 +1,15 @@
 import type { SqlIssue } from './check-sql.js';
-import type { BrowseResult, ResolveResult } from '@data-agent-ontology/ontology-core';
+import type {
+  BrowseResult,
+  MoveOptions,
+  OntologySnapshot,
+  ResolveResult,
+  ReviseOptions,
+  RevisePatch,
+  Submission,
+  Version,
+  WriteOptions,
+} from '@data-agent-ontology/ontology-core';
 
 export interface OntologyContext {
   /** Version the context was read from; a later write can cite it as its base. */
@@ -25,4 +35,12 @@ export interface OntologyClient {
   contextFor(question: string): Promise<OntologyContext>;
   /** Advisory check of one SQL statement against the active version. */
   checkSql(sql: string): Promise<SqlCheck>;
+  snapshot(): Promise<OntologySnapshot>;
+  listVersions(): Promise<Version[]>;
+  /** Structural observation. Applies to the active head; a full scope may carry `observedAt`. */
+  submitScope(submission: Submission, options?: WriteOptions): Promise<Version>;
+  /** Semantic write. Pass the `versionId` the caller read as `baseVersionId`. */
+  revise(patch: RevisePatch, options?: ReviseOptions): Promise<Version>;
+  revert(versionId: string, options?: MoveOptions): Promise<Version>;
+  rollback(versionId: string, options?: Pick<MoveOptions, 'expectedActive'>): Promise<Version>;
 }
