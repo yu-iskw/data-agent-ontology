@@ -5,11 +5,12 @@ import { parseArgs } from 'node:util';
 
 import { Ontology } from '@data-agent-ontology/ontology-core';
 
-import { createOntologyAgent, DEFAULT_MODEL } from './agent.js';
 import { applyProposal } from './apply.js';
+import { DEFAULT_MODEL } from './model.js';
 import { observeWarehouse } from './observe.js';
 import { proposalSchema } from './proposal.js';
 import { RECORDING_FORMAT, readRecording, writeRecording } from './recording.js';
+import { createSeedAgent } from './seed-agent.js';
 import { Warehouse } from './warehouse.js';
 
 import type { Proposal } from './proposal.js';
@@ -102,7 +103,7 @@ interface Run {
 /** Runs the agent against the warehouse and returns the accepted proposal with the SQL it ran. */
 async function runLive(warehouse: Warehouse, ontology: Ontology, model: string): Promise<Run> {
   const sql: Recording['sql'] = [];
-  const agent = createOntologyAgent(warehouse, {
+  const agent = createSeedAgent(warehouse, {
     model,
     onQuery: (statement, error) => {
       sql.push({ sql: statement, ...(error && { error }) });
@@ -123,6 +124,10 @@ async function runReplay(ontology: Ontology, path: string): Promise<Run> {
   return { proposal: recording.proposal, sql: recording.sql, model: recording.model };
 }
 
+/*
+ * One-time seeder entry point: fills an empty ontology, or replays a recording of such a run.
+ * The analyst agent (./agent.ts, `pnpm ask`) is what a user integrates.
+ */
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {

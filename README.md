@@ -58,7 +58,8 @@ pnpm format
 - `packages/`: Monorepo packages
   - `common/`: Shared utilities and types
   - `ontology-core/`: Deterministic ontology core (versioned store, `browse`, `resolve`, `submitScope`, `revise`, `rollback`)
-- `examples/mastra_basic/`: Mastra data analytics agent that extracts an ontology from a local DuckDB warehouse
+  - `ontology-mastra/`: `withOntology`, which attaches an ontology to an existing Mastra agent
+- `examples/mastra_basic/`: a Mastra analytics agent with the ontology attached through `withOntology`, plus a one-time seeder that fills an empty ontology from a local DuckDB warehouse
 - `eval/jaffle-shop/`: Evaluator and answer set for that example; the example never imports it
 
 ### Ontology extraction loop

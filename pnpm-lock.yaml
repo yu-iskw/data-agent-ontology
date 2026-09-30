@@ -84,9 +84,15 @@ importers:
       '@ai-sdk/google-vertex':
         specifier: ^5.0.88
         version: 5.0.88(zod@4.6.5)
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../../packages/ontology-client
       '@data-agent-ontology/ontology-core':
         specifier: workspace:*
         version: link:../../packages/ontology-core
+      '@data-agent-ontology/ontology-mastra':
+        specifier: workspace:*
+        version: link:../../packages/ontology-mastra
       '@duckdb/node-api':
         specifier: 1.5.5-r.5
         version: 1.5.5-r.5

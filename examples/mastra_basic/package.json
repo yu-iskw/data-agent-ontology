@@ -8,14 +8,18 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
-    "extract": "tsx src/extract.ts"
+    "extract": "tsx src/seed.ts",
+    "seed": "tsx src/seed.ts",
+    "ask": "tsx src/ask.ts"
   },
   "devDependencies": {
     "tsx": "^4.23.15"
   },
   "dependencies": {
     "@ai-sdk/google-vertex": "^5.0.88",
+    "@data-agent-ontology/ontology-client": "workspace:*",
     "@data-agent-ontology/ontology-core": "workspace:*",
+    "@data-agent-ontology/ontology-mastra": "workspace:*",
     "@duckdb/node-api": "1.5.5-r.5",
     "@mastra/core": "^1.71.0",
     "zod": "^4.6.5"
