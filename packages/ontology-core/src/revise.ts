@@ -26,7 +26,8 @@ function slug(text: string): string {
   return text
     .toLowerCase()
     .replaceAll(/[^a-z0-9]+/g, '_')
-    .replaceAll(/^_+|_+$/g, '')
+    .replace(/^_+/, '')
+    .replace(/_+$/, '')
     .slice(0, 48);
 }
 
