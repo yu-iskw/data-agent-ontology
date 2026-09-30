@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Ontology } from './ontology.js';
-import { ResolveLimitError } from './read.js';
+import { ResolveLimitError, withoutRevisionFlag } from './read.js';
 import { RevisionError } from './revise.js';
 import { OntologyStore, UnknownVersionError } from './store.js';
 import { ScopeViolationError } from './submit.js';
@@ -133,13 +133,15 @@ describe('submitScope', () => {
     ontology.submitScope(
       submission('full', { orders: ['order_id', 'customer_id'], customers: FULL.customers }),
     );
-    expect(ontology.store.get('mappings', 'order.amount')).toMatchObject({
+    expect(ontology.store.get('mappings', `order.${ORDERS}.amount`)).toMatchObject({
       active: false,
       drifted: true,
     });
     const resolved = ontology.resolve(['order']);
-    expect(resolved.mappings.map((m) => m.mappingId)).toEqual(['order.order_id']);
-    expect(ontology.snapshot().mappings.map((m) => m.mappingId)).not.toContain('order.amount');
+    expect(resolved.mappings.map((m) => m.mappingId)).toEqual([`order.${ORDERS}.order_id`]);
+    expect(ontology.snapshot().mappings.map((m) => m.mappingId)).not.toContain(
+      `order.${ORDERS}.amount`,
+    );
   });
 
   it('treats a rename as a new identity and inactivates the old one', () => {
@@ -173,7 +175,7 @@ describe('revise', () => {
       mappings: [{ termId: 'order', columnId: `${CUSTOMERS}.name`, role: 'attribute' }],
     };
     expect(() => ontology.revise(patch)).toThrow(RevisionError);
-    expect(ontology.store.get('mappings', 'order.name')).toBeUndefined();
+    expect(ontology.store.get('mappings', `order.${CUSTOMERS}.name`)).toBeUndefined();
   });
 
   it('rejects a generated id that already holds a different record', () => {
@@ -204,12 +206,12 @@ describe('revise', () => {
     }
     expect(problems).toEqual(
       expect.arrayContaining([
-        'Mapping id order.order_id already holds a different record',
+        `Mapping id order.${ORDERS}.order_id already holds a different record`,
         'Relation id customer_places_order already holds a different record',
         'Constraint id order:exclude_cancelled_orders already holds a different record',
       ]),
     );
-    expect(ontology.store.get('mappings', 'order.order_id')?.role).toBe('primary_key');
+    expect(ontology.store.get('mappings', `order.${ORDERS}.order_id`)?.role).toBe('primary_key');
     expect(ontology.store.get('relations', 'customer_places_order')?.toColumnId).toBe(
       `${ORDERS}.customer_id`,
     );
@@ -227,7 +229,7 @@ describe('revise', () => {
         { termId: 'order', columnId: `${ORDERS}.customer_id`, role: 'foreign_key' },
       ],
     });
-    expect(ontology.store.get('mappings', 'order.customer_id')).toMatchObject({
+    expect(ontology.store.get('mappings', `order.${ORDERS}.customer_id`)).toMatchObject({
       columnId: `${ORDERS}.customer_id`,
       role: 'foreign_key',
     });
@@ -299,6 +301,25 @@ describe('revise', () => {
       undefined,
     );
   });
+
+  it('keeps two constraints that share a 48-character slug prefix', () => {
+    const ontology = seeded();
+    const stem = 'a'.repeat(48);
+    const first = `${stem} stays included`;
+    const second = `${stem} stays excluded`;
+    ontology.revise({
+      summary: 'two long rules',
+      constraints: [
+        { termId: 'order', text: first },
+        { termId: 'order', text: second },
+      ],
+    });
+    const stored = ontology.store.list('constraints');
+    expect(stored.map((constraint) => constraint.text)).toEqual(
+      expect.arrayContaining([first, second]),
+    );
+    expect(new Set(stored.map((constraint) => constraint.constraintId)).size).toBe(stored.length);
+  });
 });
 
 describe('reads', () => {
@@ -306,6 +327,23 @@ describe('reads', () => {
     const hits = seeded().browse('How many orders did each customer place?').hits;
     expect(hits.length).toBeLessThanOrEqual(6);
     expect(hits.map((hit) => hit.id)).toEqual(expect.arrayContaining(['order', 'customer']));
+  });
+
+  it('drops the revision flag and keeps every other table field', () => {
+    const table = {
+      tableId: 'duckdb:main.t',
+      engine: 'duckdb' as const,
+      path: 'main.t',
+      kind: 'table' as const,
+      domainIds: ['sales'],
+      active: true,
+      drifted: false,
+      membershipRevised: true,
+      note: 'kept',
+    };
+    const visible = withoutRevisionFlag(table);
+    expect(visible).not.toHaveProperty('membershipRevised');
+    expect(visible).toMatchObject({ tableId: 'duckdb:main.t', note: 'kept' });
   });
 
   it('limits resolve to five terms', () => {

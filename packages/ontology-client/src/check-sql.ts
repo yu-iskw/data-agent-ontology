@@ -1,8 +1,10 @@
-import type {
-  Column,
-  OntologySnapshot,
-  Relation,
-  SnapshotTable,
+import {
+  columnIdOf,
+  unorderedColumnPair,
+  type Column,
+  type OntologySnapshot,
+  type Relation,
+  type SnapshotTable,
 } from '@data-agent-ontology/ontology-core';
 
 export type SqlIssueCode = 'unknown_table' | 'unknown_column' | 'join_mismatch' | 'constraint';
@@ -202,10 +204,21 @@ function tableOfColumn(columnId: string): string {
 }
 
 function samePair(relation: Relation, a: string, b: string): boolean {
-  return (
-    (relation.fromColumnId === a && relation.toColumnId === b) ||
-    (relation.fromColumnId === b && relation.toColumnId === a)
+  const [left, right] = unorderedColumnPair(relation.fromColumnId, relation.toColumnId);
+  const [first, second] = unorderedColumnPair(a, b);
+  return left === first && right === second;
+}
+
+function knownColumnId(
+  snapshot: OntologySnapshot,
+  tableId: string,
+  name: string,
+): string | undefined {
+  const wanted = name.toLowerCase();
+  const column = snapshot.columns.find(
+    (candidate) => candidate.tableId === tableId && candidate.name.toLowerCase() === wanted,
   );
+  return column ? columnIdOf(tableId, column.name) : undefined;
 }
 
 interface Equality {
@@ -219,16 +232,15 @@ interface Equality {
 /** Column equalities across two different tables, with the columns they name. Unknown columns are skipped. */
 function equalities(sql: string, snapshot: OntologySnapshot, refs: TableRef[]): Equality[] {
   const found: Equality[] = [];
-  const known = new Set(snapshot.columns.map((column) => column.columnId));
   for (const match of sql.matchAll(EQUALITY)) {
     const left = refFor(refs, unquote(match[1]));
     const right = refFor(refs, unquote(match[3]));
     if (!left || !right || left.table.tableId === right.table.tableId) {
       continue;
     }
-    const a = `${left.table.tableId}.${unquote(match[2])}`;
-    const b = `${right.table.tableId}.${unquote(match[4])}`;
-    if (known.has(a) && known.has(b)) {
+    const a = knownColumnId(snapshot, left.table.tableId, unquote(match[2]));
+    const b = knownColumnId(snapshot, right.table.tableId, unquote(match[4]));
+    if (a && b) {
       found.push({
         a,
         b,

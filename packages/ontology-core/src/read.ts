@@ -74,15 +74,9 @@ export function browseRecords(reader: RecordReader, question: string): BrowseHit
 }
 
 export function withoutRevisionFlag(table: Table): SnapshotTable {
-  return {
-    tableId: table.tableId,
-    engine: table.engine,
-    path: table.path,
-    kind: table.kind,
-    domainIds: table.domainIds,
-    active: table.active,
-    drifted: table.drifted,
-  };
+  const { membershipRevised, ...visible } = table;
+  void membershipRevised;
+  return visible;
 }
 
 function visibleById<K extends 'tables' | 'columns'>(

@@ -86,7 +86,7 @@ export function withOntology<C extends UserAgentConfig>(
     tools: {
       ...tools,
       ontology_lookup: createLookupTool(client),
-      ontology_note: createNoteTool(client, actor, () => sessionId(undefined)),
+      ontology_note: createNoteTool(client, actor, sessionId),
     },
     inputProcessors: [...(config.inputProcessors ?? []), createContextProcessor(client)],
   };

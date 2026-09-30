@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 
 import { refreshDrift } from './submit.js';
@@ -22,6 +23,7 @@ export class RevisionError extends Error {
 }
 
 const MAX_DOMAIN_DEPTH = 32;
+const SLUG_PREFIX = 48;
 
 function slug(text: string): string {
   const underscored = text.toLowerCase().replaceAll(/[^a-z0-9]+/g, '_');
@@ -33,7 +35,17 @@ function slug(text: string): string {
   while (end > start && underscored.charCodeAt(end - 1) === 95) {
     end -= 1;
   }
-  return underscored.slice(start, end).slice(0, 48);
+  return underscored.slice(start, end);
+}
+
+/** Short texts keep the historical slug. Longer ones add a hash so a shared prefix is not one id. */
+function constraintKey(text: string): string {
+  const full = slug(text);
+  if (full.length <= SLUG_PREFIX) {
+    return full;
+  }
+  const digest = createHash('sha256').update(full).digest('hex').slice(0, 8);
+  return `${full.slice(0, SLUG_PREFIX)}_${digest}`;
 }
 
 function holdsDifferentRecord(existing: object, next: object): boolean {
@@ -153,7 +165,7 @@ function putMapping(ctx: RevisionContext, input: MappingInput): void {
     ctx.problem(`Mapping for ${input.termId} targets unknown or inactive column ${input.columnId}`);
     return;
   }
-  const mappingId = input.mappingId ?? `${input.termId}.${column.name}`;
+  const mappingId = input.mappingId ?? `${input.termId}.${input.columnId}`;
   const mapping = {
     mappingId,
     termId: input.termId,
@@ -204,7 +216,7 @@ function putConstraint(ctx: RevisionContext, input: ConstraintInput): void {
     ctx.problem(`Constraint targets unknown term ${input.termId}`);
     return;
   }
-  const constraintId = input.constraintId ?? `${input.termId}:${slug(input.text)}`;
+  const constraintId = input.constraintId ?? `${input.termId}:${constraintKey(input.text)}`;
   const constraint = {
     constraintId,
     termId: input.termId,

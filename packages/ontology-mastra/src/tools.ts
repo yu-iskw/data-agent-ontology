@@ -24,7 +24,11 @@ export function createLookupTool(client: OntologyClient) {
 }
 
 /** Files what the agent learned as a proposal. A curator decides; nothing changes until then. */
-export function createNoteTool(client: OntologyClient, actor: Actor, sessionId: () => string) {
+export function createNoteTool(
+  client: OntologyClient,
+  actor: Actor,
+  sessionId: (context: unknown) => string,
+) {
   return createTool({
     id: NOTE_TOOL,
     description:
@@ -36,12 +40,12 @@ export function createNoteTool(client: OntologyClient, actor: Actor, sessionId: 
       statement: z.string().describe('The rule, in one sentence.'),
       evidence: z.string().describe('The SQL that shows the rule holds.'),
     }),
-    execute: async ({ termId, statement, evidence }) => {
+    execute: async ({ termId, statement, evidence }, context) => {
       const proposal = await client.note({
         termId,
         statement,
         evidenceSql: evidence,
-        sessionId: sessionId(),
+        sessionId: sessionId(context),
         actor,
       });
       return {

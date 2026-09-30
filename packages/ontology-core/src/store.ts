@@ -1,10 +1,16 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 import { Connection, Database } from '@ladybugdb/core';
 
-import { ActiveVersionChangedError, findConflicts, MergeConflictError } from './merge.js';
+import {
+  ActiveVersionChangedError,
+  baseRestoreConflicts,
+  findConflicts,
+  MergeConflictError,
+} from './merge.js';
 import { diffRecords, RECORD_KINDS } from './revision.js';
 
 import type { OntologyRecords, RecordKind, Version, VersionReason, WriteOptions } from './model.js';
@@ -119,21 +125,10 @@ RETURN r.revisionId AS revisionId, r.payload AS payload`;
 const LIST_REVISION_IDS = 'MATCH (r:Revision) RETURN r.revisionId AS revisionId';
 
 export class UnknownVersionError extends Error {
-  constructor(versionId: string) {
+  constructor(readonly versionId: string) {
     super(`Unknown ontology version: ${versionId}`);
     this.name = 'UnknownVersionError';
   }
-}
-
-function stableJson(value: unknown): string {
-  return JSON.stringify(value, (_key, inner: unknown) => {
-    if (inner === null || typeof inner !== 'object' || Array.isArray(inner)) {
-      return inner;
-    }
-    return Object.fromEntries(
-      Object.entries(inner as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)),
-    );
-  });
 }
 
 function defaultDatabasePath(): string {
@@ -272,7 +267,7 @@ export class Draft {
 
   put<K extends RecordKind>(kind: K, id: string, value: OntologyRecords[K]): void {
     const current = this.table(kind).get(id);
-    if (current && stableJson(current.value) === stableJson(value)) {
+    if (current && isDeepStrictEqual(current.value, value)) {
       return;
     }
     const revisionId = this.nextRevisionId();
@@ -354,6 +349,12 @@ type WorkItemKind = 'trace' | 'proposal';
 interface CommitOptions extends WriteOptions {
   baseVersionId?: string;
   expectedActive?: string;
+  /** Written in the same transaction as the version, after the version row exists. */
+  followUp?: {
+    kind: WorkItemKind;
+    itemId: string;
+    value: (version: Version) => object;
+  };
 }
 
 export const STORE_FORMAT = 'data-agent-ontology/store@1';
@@ -486,7 +487,15 @@ export class OntologyStore {
     let created: Version | undefined;
     try {
       this.transaction(() => {
-        created = this.commitInTransaction(reason, stage, options);
+        const version = this.commitInTransaction(reason, stage, options);
+        created = version;
+        if (options.followUp) {
+          this.writeWorkItem(
+            options.followUp.kind,
+            options.followUp.itemId,
+            options.followUp.value(version),
+          );
+        }
       });
     } catch (error) {
       this.revisionCounter = counter;
@@ -514,7 +523,7 @@ export class OntologyStore {
   /** Traces and proposals live beside the versions, outside them, so they never add to a commit. */
   putWorkItem(kind: WorkItemKind, itemId: string, value: object): void {
     this.transaction(() => {
-      this.run(UPSERT_WORK_ITEM, { itemId, kind, payload: JSON.stringify(value) });
+      this.writeWorkItem(kind, itemId, value);
     });
   }
 
@@ -651,18 +660,30 @@ export class OntologyStore {
     }
     this.requireVersion(baseVersionId);
     const base = this.recordsOf(baseVersionId);
-    let probeCounter = 0;
-    const probe = new Draft(
-      base,
-      () => `probe${(probeCounter += 1)}`,
-      (instant) => this.recordsAsOf(instant),
-    );
-    stage(probe);
-    const conflicts = findConflicts(base, this.recordsOf(), probe.changes());
+    const headRecords = this.recordsOf();
+    const conflicts = findConflicts(base, headRecords, this.probe(base, stage).changes());
     if (conflicts.length > 0) {
       throw new MergeConflictError(baseVersionId, head, conflicts);
     }
+    const restored = baseRestoreConflicts(base, this.probe(headRecords, stage).changes());
+    if (restored.length > 0) {
+      throw new MergeConflictError(baseVersionId, head, restored);
+    }
     return baseVersionId;
+  }
+
+  private probe(records: RecordTables, stage: (draft: Draft) => void): Draft {
+    let counter = 0;
+    const draft = new Draft(
+      records,
+      () => {
+        counter += 1;
+        return `probe${counter}`;
+      },
+      (instant) => this.recordsAsOf(instant),
+    );
+    stage(draft);
+    return draft;
   }
 
   private insertVersion(version: Version, draft: Draft, expectedHead: string | null): void {
@@ -703,10 +724,27 @@ export class OntologyStore {
     }
   }
 
+  /** Latest version on the active lineage that existed at `instant`. Abandoned versions are not a baseline. */
   private recordsAsOf(instant: string): RecordTables {
-    const seen = this.listVersions().filter((version) => version.createdAt <= instant);
-    const latest = seen.at(-1);
-    return latest ? this.recordsOf(latest.versionId) : EMPTY_RECORDS;
+    const versions = new Map(this.listVersions().map((version) => [version.versionId, version]));
+    const visited = new Set<string>();
+    let versionId = this.pointerVersionId();
+    while (versionId !== null && !visited.has(versionId)) {
+      visited.add(versionId);
+      const version = versions.get(versionId);
+      if (!version) {
+        break;
+      }
+      if (version.createdAt <= instant) {
+        return this.recordsOf(version.versionId);
+      }
+      versionId = version.parentVersionId;
+    }
+    return EMPTY_RECORDS;
+  }
+
+  private writeWorkItem(kind: WorkItemKind, itemId: string, value: object): void {
+    this.run(UPSERT_WORK_ITEM, { itemId, kind, payload: JSON.stringify(value) });
   }
 
   private record(kind: RecordKind, recordId: string, versionId?: string): Revision | undefined {

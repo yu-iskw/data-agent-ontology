@@ -277,4 +277,17 @@ describe('ontology tools', () => {
     ]);
     expect(ontology.store.listVersions()).toHaveLength(2);
   });
+
+  it('files a note on the same conversation thread as a SQL trace', async () => {
+    const { config, ontology } = setup();
+    await tool(config, 'ontology_note').execute(
+      {
+        termId: 'order',
+        statement: 'Amounts are in dollars.',
+        evidence: 'SELECT max(amount) FROM proj.sales.orders',
+      },
+      { agent: { threadId: 'thread-7' } },
+    );
+    expect(ontology.listProposals()[0]?.sessions).toEqual(['thread-7']);
+  });
 });

@@ -194,9 +194,10 @@ export class Ontology {
   /**
    * A curator accepts a proposal. Referenced terms, tables, and columns must exist and be
    * active, and a second open constraint on the same term with different text is refused.
-   * That check throws `RevisionError` and leaves the proposal open. The patch is then revised
-   * against the version it came from, so an overlapping change since then throws
-   * `MergeConflictError` and the proposal stays open.
+   * That check throws `RevisionError` and leaves the proposal open, writing nothing.
+   * The version and the accepted status commit in one transaction. A failure after the
+   * version write rolls both back, so a retry does not append a second version. An
+   * overlapping change throws `MergeConflictError` and the proposal stays open.
    */
   acceptProposal(proposalId: string, curator: Actor, edits?: ProposalEdits): Proposal {
     const proposal = this.openProposal(proposalId);
@@ -210,12 +211,36 @@ export class Ontology {
     if (problems.length > 0) {
       throw new RevisionError(problems);
     }
-    const version = this.revise(patch, {
-      baseVersionId: proposal.baseVersionId,
-      actor: curator,
-      proposalId,
-    });
-    return this.decide(proposal, 'accepted', curator, version.versionId);
+    let accepted: Proposal | undefined;
+    this.store.commit(
+      'revise',
+      (draft) => {
+        applyRevision(draft, patch);
+      },
+      {
+        baseVersionId: proposal.baseVersionId,
+        actor: curator,
+        proposalId,
+        followUp: {
+          kind: 'proposal',
+          itemId: proposal.proposalId,
+          value: (version) => {
+            accepted = {
+              ...proposal,
+              status: 'accepted',
+              decidedBy: curator,
+              resolvedVersionId: version.versionId,
+              updatedAt: this.store.now().toISOString(),
+            };
+            return accepted;
+          },
+        },
+      },
+    );
+    if (!accepted) {
+      throw new Error('Accept did not store the decision');
+    }
+    return accepted;
   }
 
   /** A rejected proposal stays stored, so the proposers do not raise it again. */

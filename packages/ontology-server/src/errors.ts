@@ -57,7 +57,6 @@ function on<T extends Error>(
 
 /** Ordered: the first mapper that recognizes the error decides the reply. */
 const MAPPERS: Mapper[] = [
-  on(ServiceError, 400, 'bad_request'),
   on(MergeConflictError, 409, 'merge_conflict', (error) => ({
     baseVersionId: error.baseVersionId,
     headVersionId: error.headVersionId,
@@ -77,7 +76,7 @@ const MAPPERS: Mapper[] = [
   })),
   on(UnknownProposalError, 404, 'unknown_proposal', (error) => ({ proposalId: error.proposalId })),
   on(RevisionError, 422, 'revision_rejected', (error) => ({ problems: error.problems })),
-  on(UnknownVersionError, 404, 'unknown_version'),
+  on(UnknownVersionError, 404, 'unknown_version', (error) => ({ versionId: error.versionId })),
   on(SubmissionError, 422, 'rejected'),
   on(ScopeViolationError, 422, 'rejected'),
   on(ResolveLimitError, 422, 'rejected'),

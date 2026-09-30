@@ -1,7 +1,12 @@
+import { columnIdOf } from '@data-agent-ontology/ontology-core';
 import { describe, expect, it } from 'vitest';
 
+import { shapeOfSql } from './check-sql.js';
 import { LocalOntologyClient } from './local.js';
 import { seededOntology } from './testing.js';
+
+const ORDERS = 'bigquery:proj.sales.orders';
+const CUSTOMERS = 'bigquery:proj.sales.customers';
 
 function client(): LocalOntologyClient {
   return new LocalOntologyClient(seededOntology());
@@ -45,6 +50,26 @@ describe('checkSql', () => {
     const { issues } = await client().checkSql(wrong);
     expect(issues.find((issue) => issue.code === 'join_mismatch')?.message).toContain(
       'customers.customer_id = orders.customer_id',
+    );
+  });
+
+  it('matches join columns case-insensitively and keeps the stored column ids', async () => {
+    const snapshot = seededOntology().snapshot();
+    const matched =
+      'SELECT c.name FROM sales.customers c JOIN sales.orders o ON c.CUSTOMER_ID = o.CUSTOMER_ID';
+    const mismatched =
+      'SELECT c.name FROM sales.customers c JOIN sales.orders o ON c.CUSTOMER_ID = o.ORDER_ID';
+    expect(shapeOfSql(matched, snapshot).joins).toEqual([
+      [columnIdOf(CUSTOMERS, 'customer_id'), columnIdOf(ORDERS, 'customer_id')],
+    ]);
+    expect(
+      (await client().checkSql(matched)).issues.filter((issue) => issue.code === 'join_mismatch'),
+    ).toEqual([]);
+    expect(shapeOfSql(mismatched, snapshot).joins).toEqual([
+      [columnIdOf(CUSTOMERS, 'customer_id'), columnIdOf(ORDERS, 'order_id')],
+    ]);
+    expect((await client().checkSql(mismatched)).issues.map((issue) => issue.code)).toContain(
+      'join_mismatch',
     );
   });
 
