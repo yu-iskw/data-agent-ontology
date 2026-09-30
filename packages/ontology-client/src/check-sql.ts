@@ -41,6 +41,7 @@ const KEYWORDS = new Set([
 ]);
 
 const SYSTEM_SCHEMAS = new Set(['information_schema', 'pg_catalog']);
+/* eslint-disable security/detect-non-literal-regexp -- every pattern is built from constant fragments */
 const IDENT = String.raw`(?:"[^"]+"|[A-Za-z_][\w$]*)`;
 const TABLE_REF = new RegExp(
   String.raw`\b(?:from|join)\s+(${IDENT}(?:\.${IDENT})*)(?:\s+(?:as\s+)?(${IDENT}))?`,
@@ -49,6 +50,8 @@ const TABLE_REF = new RegExp(
 const CTE_NAME = new RegExp(String.raw`(${IDENT})\s+as\s*\(`, 'gi');
 const QUALIFIED = new RegExp(String.raw`(${IDENT})\.(${IDENT})`, 'g');
 const EQUALITY = new RegExp(String.raw`(${IDENT})\.(${IDENT})\s*=\s*(${IDENT})\.(${IDENT})`, 'g');
+/* eslint-enable security/detect-non-literal-regexp */
+
 const MAX_SUGGESTION_DISTANCE = 3;
 const MAX_CONSTRAINT_NOTES = 8;
 
@@ -69,6 +72,7 @@ function stripLiterals(sql: string): string {
     .replaceAll(/'(?:[^']|'')*'/g, "''");
 }
 
+/* eslint-disable security/detect-object-injection -- numeric indexes into local arrays */
 function distance(a: string, b: string): number {
   let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
   for (let i = 1; i <= a.length; i += 1) {
@@ -81,6 +85,7 @@ function distance(a: string, b: string): number {
   }
   return previous[b.length];
 }
+/* eslint-enable security/detect-object-injection */
 
 function nearest(name: string, candidates: string[]): string | undefined {
   let best: { candidate: string; cost: number } | undefined;

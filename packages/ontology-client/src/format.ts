@@ -6,18 +6,27 @@ import type {
   Term,
 } from '@data-agent-ontology/ontology-core';
 
-const ROLE_LABEL: Record<Mapping['role'], string> = {
-  primary_key: 'pk',
-  foreign_key: 'fk',
-  attribute: '',
-};
+function roleLabel(role: Mapping['role']): string {
+  switch (role) {
+    case 'primary_key':
+      return 'pk';
+    case 'foreign_key':
+      return 'fk';
+    case 'attribute':
+      return '';
+    default: {
+      const unreachable: never = role;
+      throw new Error(`Unhandled role ${String(unreachable)}`);
+    }
+  }
+}
 
 function columnLine(
   column: Column,
   table: SnapshotTable | undefined,
   role: Mapping['role'],
 ): string {
-  const label = ROLE_LABEL[role];
+  const label = roleLabel(role);
   const owner = table?.path ?? column.tableId;
   return `${owner}.${column.name} ${column.dataType}${label ? ` (${label})` : ''}`;
 }

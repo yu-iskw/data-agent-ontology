@@ -164,6 +164,7 @@ describe('toRevisePatch', () => {
   });
 });
 
+/* eslint-disable security/detect-non-literal-fs-filename -- paths are inside a fresh temp directory */
 describe('replaying a recorded run', () => {
   async function scratch(): Promise<string> {
     return join(await mkdtemp(join(tmpdir(), 'recording-')), 'run.json');
@@ -219,3 +220,4 @@ describe('replaying a recorded run', () => {
     await expect(readRecording(path)).rejects.toThrow();
   });
 });
+/* eslint-enable security/detect-non-literal-fs-filename */

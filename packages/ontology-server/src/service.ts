@@ -9,12 +9,15 @@ function isMethod(name: string): name is Method {
   return (METHODS as readonly string[]).includes(name);
 }
 
+/* eslint-disable security/detect-object-injection -- keys are typed request fields and method names checked by isMethod */
 function field<T extends object, K extends keyof T>(body: T, key: K): T[K] {
   if (!(key in body) || body[key] === undefined) {
     throw new ServiceError(400, 'bad_request', `Missing field ${String(key)}`);
   }
   return body[key];
 }
+
+/* eslint-enable security/detect-object-injection */
 
 type Handler<M extends Method> = (service: OntologyService, request: Requests[M]) => Responses[M];
 
@@ -54,6 +57,7 @@ export class OntologyService {
     if (body === null || typeof body !== 'object' || Array.isArray(body)) {
       throw new ServiceError(400, 'bad_request', 'The request body must be a JSON object');
     }
+    // eslint-disable-next-line security/detect-object-injection -- `name` passed isMethod
     const handler = HANDLERS[name] as Handler<Method>;
     return handler(this, body);
   }
