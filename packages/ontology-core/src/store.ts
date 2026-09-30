@@ -50,6 +50,15 @@ const SCHEMA = [
     ddl: 'CREATE REL TABLE Includes(FROM OntologyVersion TO Revision)',
   },
   {
+    name: 'WorkItem',
+    ddl: `CREATE NODE TABLE WorkItem(
+      itemId STRING,
+      kind STRING,
+      payload STRING,
+      PRIMARY KEY (itemId)
+    )`,
+  },
+  {
     name: 'ActivePointer',
     ddl: `CREATE NODE TABLE ActivePointer(
       pointerId STRING,
@@ -94,6 +103,10 @@ MATCH (v:OntologyVersion {versionId: $versionId}), (r:Revision {revisionId: revi
 CREATE (v)-[:Includes]->(r)`;
 const LIST_VERSIONS = `MATCH (v:OntologyVersion) RETURN ${VERSION_COLUMNS}`;
 const READ_VERSION = `MATCH (v:OntologyVersion {versionId: $versionId}) RETURN ${VERSION_COLUMNS}`;
+const UPSERT_WORK_ITEM = `MERGE (w:WorkItem {itemId: $itemId})
+SET w.kind = $kind, w.payload = $payload`;
+const LIST_WORK_ITEMS =
+  'MATCH (w:WorkItem {kind: $kind}) RETURN w.itemId AS itemId, w.payload AS payload';
 const TABLE_INFO = "CALL table_info('OntologyVersion') RETURN name";
 const READ_RECORDS = `MATCH (v:OntologyVersion {versionId: $versionId})-[:Includes]->(r:Revision)
 RETURN r.revisionId AS revisionId, r.kind AS kind, r.recordId AS recordId, r.payload AS payload`;
@@ -226,6 +239,10 @@ function revisionNumber(revisionId: string): number {
   return Number(revisionId.slice(1)) || 0;
 }
 
+function workItemNumber(itemId: string): number {
+  return Number(itemId.replaceAll(/\D/g, '')) || 0;
+}
+
 function versionNumber(versionId: string): number {
   return Number(versionId.slice(1)) || 0;
 }
@@ -332,6 +349,8 @@ export class Draft {
   }
 }
 
+export type WorkItemKind = 'trace' | 'proposal';
+
 interface CommitOptions extends WriteOptions {
   baseVersionId?: string;
   expectedActive?: string;
@@ -364,7 +383,7 @@ export class OntologyStore {
   private revisionCounter = 0;
 
   constructor(
-    private readonly now: () => Date = () => new Date(),
+    readonly now: () => Date = () => new Date(),
     databasePath: string = defaultDatabasePath(),
   ) {
     this.database = new Database(databasePath, BUFFER_POOL_BYTES, true, false, MAX_DATABASE_BYTES);
@@ -490,6 +509,23 @@ export class OntologyStore {
       this.compareAndSetPointer(head, versionId);
     });
     return version;
+  }
+
+  /** Traces and proposals live beside the versions, outside them, so they never add to a commit. */
+  putWorkItem(kind: WorkItemKind, itemId: string, value: object): void {
+    this.transaction(() => {
+      this.run(UPSERT_WORK_ITEM, { itemId, kind, payload: JSON.stringify(value) });
+    });
+  }
+
+  listWorkItems<T>(kind: WorkItemKind): T[] {
+    return this.rows(LIST_WORK_ITEMS, { kind })
+      .map((row) => ({
+        itemId: requireString(row.itemId, 'itemId'),
+        value: JSON.parse(requireString(row.payload, 'payload')) as T,
+      }))
+      .sort((a, b) => workItemNumber(a.itemId) - workItemNumber(b.itemId))
+      .map((entry) => entry.value);
   }
 
   toJSON(): StoreJson {
