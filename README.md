@@ -60,6 +60,8 @@ pnpm format
   - `ontology-core/`: Deterministic ontology core (versioned store, `browse`, `resolve`, `submitScope`, `revise`, `rollback`)
   - `ontology-mastra/`: `withOntology`, which attaches an ontology to an existing Mastra agent
 - `examples/mastra_basic/`: a Mastra analytics agent with the ontology attached through `withOntology`, plus a one-time seeder that fills an empty ontology from a local DuckDB warehouse
+- `examples/client_loops/`: the same use loop and propose-and-curate loop on `OntologyClient`, with no Mastra
+- `examples/shared_service/`: two users sharing one ontology HTTP service, including a merge and a conflict
 - `eval/jaffle-shop/`: Evaluator and answer set for that example; the example never imports it
 
 ### Ontology extraction loop

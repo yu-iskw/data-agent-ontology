@@ -79,6 +79,15 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  examples/client_loops:
+    dependencies:
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../../packages/ontology-client
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../../packages/ontology-core
+
   examples/mastra_basic:
     dependencies:
       '@ai-sdk/google-vertex':
@@ -106,6 +115,18 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+
+  examples/shared_service:
+    dependencies:
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../../packages/ontology-client
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../../packages/ontology-core
+      '@data-agent-ontology/ontology-server':
+        specifier: workspace:*
+        version: link:../../packages/ontology-server
 
   packages/common: {}
 

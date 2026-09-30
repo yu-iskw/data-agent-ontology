@@ -2,7 +2,7 @@
   "name": "@data-agent-ontology/example-mastra-basic",
   "version": "0.1.0",
   "private": true,
-  "description": "Mastra data analytics agent that extracts an ontology from a local DuckDB warehouse.",
+  "description": "Mastra analytics agent with the ontology attached through withOntology, plus a one-time seeder.",
   "license": "Apache-2.0",
   "author": "",
   "type": "module",

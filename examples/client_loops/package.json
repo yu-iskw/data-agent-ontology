@@ -1,0 +1,17 @@
+{
+  "name": "@data-agent-ontology/example-client-loops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-neutral example of the use loop and the propose-and-curate loop on a local ontology client.",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-client": "workspace:*",
+    "@data-agent-ontology/ontology-core": "workspace:*"
+  }
+}
