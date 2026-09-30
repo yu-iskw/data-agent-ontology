@@ -1,0 +1,31 @@
+{
+  "name": "@data-agent-ontology/ontology-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional MCP host adapter for one ontology file: stdio for a local process, Streamable HTTP when a remote host must connect.",
+  "keywords": [
+    "ontology",
+    "analytics-agent",
+    "mcp"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "start": "tsx src/main.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-client": "workspace:*",
+    "@data-agent-ontology/ontology-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

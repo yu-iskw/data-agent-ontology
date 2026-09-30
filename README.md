@@ -63,6 +63,21 @@ ONTOLOGY_FILE=./ontology.lbdb ONTOLOGY_TOKEN=secret PORT=8787 \
   pnpm --filter @data-agent-ontology/ontology-server start
 ```
 
+## MCP
+
+[`ontology-mcp`](packages/ontology-mcp) is optional. It is a host adapter beside `withOntology`, not a replacement for the library or [`ontology-server`](packages/ontology-server).
+
+One process owns the `.lbdb` file. Use STDIO when that process is the local MCP server a host starts (no port, no token). Use HTTP when a remote MCP host must connect. HTTP requires a bearer token and defaults to port `8788` so it does not collide with `ontology-server`.
+
+The MCP tools can read context, check SQL, and file notes and traces as proposals. They do not accept, revise, or submit a scope. Curator accept stays on the library or the existing HTTP service.
+
+```bash
+pnpm --filter @data-agent-ontology/ontology-mcp start -- --transport stdio --file ./ontology.lbdb
+
+ONTOLOGY_FILE=./ontology.lbdb ONTOLOGY_TOKEN=secret \
+  pnpm --filter @data-agent-ontology/ontology-mcp start -- --transport http --port 8788
+```
+
 ## Getting started
 
 ### Prerequisites
@@ -120,6 +135,7 @@ pnpm format
   - [`ontology-client`](packages/ontology-client): `contextFor`, advisory `checkSql`, `LocalOntologyClient`, and `RemoteOntologyClient`
   - [`ontology-mastra`](packages/ontology-mastra): `withOntology`, which attaches a client to an existing Mastra agent
   - [`ontology-server`](packages/ontology-server): one process that owns one `.lbdb` file and serves it over HTTP with a static bearer token
+  - [`ontology-mcp`](packages/ontology-mcp): optional MCP adapter, STDIO or Streamable HTTP, one process per `.lbdb` file
   - [`common`](packages/common): shared utilities and types
 - [`examples/mastra_basic`](examples/mastra_basic): a Mastra analytics agent with the ontology attached, plus a one-time seeder for an empty ontology
 - [`examples/client_loops`](examples/client_loops): the use loop and the propose-and-curate loop on `OntologyClient`, with no Mastra
