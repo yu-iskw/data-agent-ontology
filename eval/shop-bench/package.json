@@ -1,0 +1,21 @@
+{
+  "name": "@data-agent-ontology/eval-shop-bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Grades retrieved shop context for an empty ontology, a static fixture, and a curator-gated learning arm.",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "evaluate": "tsx src/run.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-client": "workspace:*",
+    "@data-agent-ontology/ontology-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

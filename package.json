@@ -28,7 +28,8 @@
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
     "example:extract": "pnpm --filter @data-agent-ontology/example-mastra-basic extract",
-    "eval:jaffle-shop": "pnpm --filter @data-agent-ontology/eval-jaffle-shop evaluate --artifact ../../examples/mastra_basic/out/ontology.json"
+    "eval:jaffle-shop": "pnpm --filter @data-agent-ontology/eval-jaffle-shop evaluate --artifact ../../examples/mastra_basic/out/ontology.json",
+    "eval:shop-bench": "pnpm --filter @data-agent-ontology/eval-shop-bench evaluate"
   },
   "devDependencies": {
     "@trunkio/launcher": "^1.3.4",

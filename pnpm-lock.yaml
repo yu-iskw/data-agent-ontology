@@ -79,6 +79,19 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  eval/shop-bench:
+    dependencies:
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../../packages/ontology-client
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../../packages/ontology-core
+    devDependencies:
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
   examples/client_loops:
     dependencies:
       '@data-agent-ontology/ontology-client':
