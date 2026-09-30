@@ -93,3 +93,31 @@ export function findConflicts(
   }
   return conflicts;
 }
+
+/**
+ * A put of the base value is not a delta, so `findConflicts` ignores it. It still conflicts
+ * when applying that put on the head would replace a newer value.
+ */
+export function baseRestoreConflicts(
+  base: RecordTables,
+  appliedToHead: RecordDelta[],
+): MergeConflict[] {
+  const conflicts: MergeConflict[] = [];
+  for (const change of appliedToHead) {
+    if (change.kind === 'evidence' || change.after === undefined) {
+      continue;
+    }
+    const baseValue = base.get(change.kind)?.get(change.id)?.value;
+    if (!isDeepStrictEqual(change.after, baseValue)) {
+      continue;
+    }
+    conflicts.push({
+      kind: change.kind,
+      id: change.id,
+      base: baseValue,
+      theirs: change.before,
+      mine: change.after,
+    });
+  }
+  return conflicts;
+}

@@ -278,6 +278,11 @@ export function columnIdOf(tableId: string, column: string): string {
   return `${tableId}.${column}`;
 }
 
+/** Column ids of one join, ordered so the two sides are the same pair either way around. */
+export function unorderedColumnPair(left: string, right: string): [string, string] {
+  return left.localeCompare(right) <= 0 ? [left, right] : [right, left];
+}
+
 /** Parent dataset or schema path of a table path: `main.orders` becomes `main`. */
 export function scopePathOf(tablePath: string): string {
   const cut = tablePath.lastIndexOf('.');

@@ -109,10 +109,10 @@ describe('toRevisePatch', () => {
       .mappings.map((m) => [m.mappingId, m.role])
       .sort(([a], [b]) => String(a).localeCompare(String(b)));
     expect(roles).toEqual([
-      ['maker.maker_id', 'primary_key'],
-      ['widget.maker_id', 'foreign_key'],
-      ['widget.price', 'attribute'],
-      ['widget.widget_id', 'primary_key'],
+      ['maker.duckdb:mart.makers.maker_id', 'primary_key'],
+      ['widget.duckdb:mart.widgets.maker_id', 'foreign_key'],
+      ['widget.duckdb:mart.widgets.price', 'attribute'],
+      ['widget.duckdb:mart.widgets.widget_id', 'primary_key'],
     ]);
     expect(ontology.snapshot().tables.map((t) => [t.path, t.domainIds])).toEqual([
       ['mart.makers', ['makers']],

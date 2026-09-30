@@ -14,6 +14,7 @@ import {
 import { Ontology, OntologyStore } from '@data-agent-ontology/ontology-core';
 import { describe, expect, it } from 'vitest';
 
+import { ServiceError, toFailure } from './errors.js';
 import { startServer } from './http.js';
 import { OntologyService } from './service.js';
 
@@ -101,6 +102,39 @@ describe('parallel clients', () => {
 });
 
 describe('http surface', () => {
+  it('keeps 401 and 404 on service errors', () => {
+    expect(toFailure(new ServiceError(401, 'unauthorized', 'no'))).toMatchObject({
+      status: 401,
+      body: { code: 'unauthorized' },
+    });
+    expect(toFailure(new ServiceError(404, 'unknown_method', 'missing'))).toMatchObject({
+      status: 404,
+      body: { code: 'unknown_method' },
+    });
+  });
+
+  it('sends the unknown version id in details', async () => {
+    const { server, client } = await start();
+    try {
+      const response = await fetch(`${server.url}/v1/rollback`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ versionId: 'v999' }),
+      });
+      expect(response.status).toBe(404);
+      expect(await response.json()).toMatchObject({
+        ok: false,
+        error: { code: 'unknown_version', details: { versionId: 'v999' } },
+      });
+      await expect(client.rollback('v999')).rejects.toMatchObject({
+        name: 'UnknownVersionError',
+        versionId: 'v999',
+      });
+    } finally {
+      await server.close();
+    }
+  });
+
   it('rejects a request without the bearer token', async () => {
     const { server } = await start();
     try {

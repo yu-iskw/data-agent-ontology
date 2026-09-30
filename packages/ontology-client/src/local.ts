@@ -1,5 +1,5 @@
 import { checkSqlAgainst, shapeOfSql } from './check-sql.js';
-import { formatContext } from './format.js';
+import { contextFor as readContext } from './context.js';
 
 import type { OntologyClient, OntologyContext, SqlCheck, SqlRun } from './client.js';
 import type {
@@ -20,8 +20,6 @@ import type {
   WriteOptions,
 } from '@data-agent-ontology/ontology-core';
 
-const MAX_CONTEXT_TERMS = 5;
-
 /** Runs the ontology core in-process. The snapshot is cached per version, so checks cost no query. */
 export class LocalOntologyClient implements OntologyClient {
   private cached: OntologySnapshot | undefined;
@@ -36,17 +34,8 @@ export class LocalOntologyClient implements OntologyClient {
     return Promise.resolve(this.ontology.resolve(termIds));
   }
 
-  async contextFor(question: string): Promise<OntologyContext> {
-    const { versionId, hits } = await this.browse(question);
-    const termIds = hits
-      .filter((hit) => hit.kind === 'term')
-      .slice(0, MAX_CONTEXT_TERMS)
-      .map((hit) => hit.id);
-    if (termIds.length === 0) {
-      return { versionId, text: '', termIds };
-    }
-    const resolved = await this.resolve(termIds);
-    return { versionId: resolved.versionId, text: formatContext(resolved), termIds };
+  contextFor(question: string): Promise<OntologyContext> {
+    return readContext(this, question);
   }
 
   checkSql(sql: string): Promise<SqlCheck> {

@@ -160,6 +160,51 @@ describe('deterministic relation proposer', () => {
     expect(ontology.listProposals()).toHaveLength(1);
   });
 
+  it('binds a column to its primary-key term when another term also maps it', () => {
+    const ontology = seeded();
+    ontology.revise({
+      summary: 'buyer alias',
+      terms: [{ termId: 'buyer', name: 'buyer', domainId: 'shop', definition: 'A buyer.' }],
+      mappings: [{ termId: 'buyer', columnId: CUSTOMER_PK, role: 'attribute' }],
+    });
+    for (const session of ['s1', 's1', 's2']) {
+      ontology.recordTrace(joinTrace(session));
+    }
+    const [proposal] = ontology.proposeRelations();
+    expect(proposal.patch.relations?.[0]).toMatchObject({
+      fromTermId: 'customer',
+      toTermId: 'order',
+      fromColumnId: CUSTOMER_PK,
+      toColumnId: ORDER_FK,
+    });
+  });
+
+  it('counts a repeated join in one statement as a single sighting', () => {
+    const ontology = seeded();
+    const duplicated = [ORDER_FK, CUSTOMER_PK] as [string, string];
+    ontology.recordTrace(joinTrace('s1', { joins: [duplicated, duplicated] }));
+    ontology.recordTrace(joinTrace('s2', { joins: [duplicated, duplicated] }));
+    expect(ontology.proposeRelations()).toEqual([]);
+
+    ontology.recordTrace(joinTrace('s3', { joins: [duplicated, [CUSTOMER_PK, ORDER_FK]] }));
+    const [proposal] = ontology.proposeRelations();
+    expect(proposal).toMatchObject({ support: 3, evidence: { traceIds: ['t1', 't2', 't3'] } });
+  });
+
+  it('does not collide when one term maps the same column name on two tables', () => {
+    const ontology = seeded();
+    ontology.revise({
+      summary: 'customer on orders',
+      mappings: [{ termId: 'customer', columnId: ORDER_FK, role: 'foreign_key' }],
+    });
+    const ids = ontology.store
+      .list('mappings')
+      .filter((mapping) => mapping.termId === 'customer')
+      .map((mapping) => mapping.mappingId)
+      .sort((a, b) => a.localeCompare(b));
+    expect(ids).toEqual([`customer.${CUSTOMER_PK}`, `customer.${ORDER_FK}`].sort());
+  });
+
   it('skips a join the ontology already holds as a relation', () => {
     const ontology = seeded();
     ontology.revise({
@@ -278,6 +323,48 @@ describe('accepting and rejecting', () => {
     expect(ontology.listProposals('open').map((proposal) => proposal.proposalId)).toEqual([
       second.proposalId,
     ]);
+    expect(ontology.snapshot().constraints.map((constraint) => constraint.text)).toEqual([
+      'Exclude cancelled orders.',
+    ]);
+  });
+
+  it('rolls back the version when the accepted status cannot be stored', () => {
+    let acceptTicks = 0;
+    let armed = false;
+    const store = new OntologyStore(() => {
+      if (armed) {
+        acceptTicks += 1;
+        if (acceptTicks > 1) {
+          throw new Error('clock failed after the version write');
+        }
+      }
+      return new Date('2026-06-01T00:00:00.000Z');
+    });
+    const ontology = new Ontology(store);
+    ontology.submitScope(STRUCTURE);
+    ontology.revise(TERMS);
+    const proposal = ontology.note({
+      termId: 'order',
+      statement: 'Exclude cancelled orders.',
+      sessionId: 's1',
+      actor: { id: 'agent' },
+    });
+    const versions = store.listVersions().length;
+    armed = true;
+    expect(() => ontology.acceptProposal(proposal.proposalId, CURATOR)).toThrow(
+      'clock failed after the version write',
+    );
+    expect(ontology.listProposals('open').map((item) => item.proposalId)).toEqual([
+      proposal.proposalId,
+    ]);
+    expect(ontology.snapshot().constraints).toEqual([]);
+    expect(store.listVersions()).toHaveLength(versions);
+
+    armed = false;
+    const accepted = ontology.acceptProposal(proposal.proposalId, CURATOR);
+    expect(accepted.status).toBe('accepted');
+    expect(store.listVersions()).toHaveLength(versions + 1);
+    expect(ontology.listProposals('open')).toEqual([]);
     expect(ontology.snapshot().constraints.map((constraint) => constraint.text)).toEqual([
       'Exclude cancelled orders.',
     ]);

@@ -5,10 +5,9 @@ import { join } from 'node:path';
 import { Connection, Database } from '@ladybugdb/core';
 import { describe, expect, it } from 'vitest';
 
-import { OntologyStore, UnknownVersionError } from './store.js';
+import { Draft, OntologyStore, UnknownVersionError } from './store.js';
 
 import type { Term } from './model.js';
-import type { Draft } from './store.js';
 import type { LbugValue } from '@ladybugdb/core';
 
 const NOW = (): Date => new Date('2026-01-01T00:00:00.000Z');
@@ -197,6 +196,11 @@ describe('Ladybug ontology store', () => {
       draft.put('terms', ORDER.termId, ORDER);
     });
     expect(() => store.activate('v999')).toThrow(UnknownVersionError);
+    try {
+      store.activate('v999');
+    } catch (error) {
+      expect(error).toMatchObject({ name: 'UnknownVersionError', versionId: 'v999' });
+    }
     expect(store.activeVersion?.versionId).toBe(version.versionId);
     store.close();
     expect(facts(path).pointer).toBe(version.versionId);
@@ -220,5 +224,18 @@ describe('Ladybug ontology store', () => {
     expect(reopened.listVersions()).toEqual([version]);
     reopened.close();
     expect(facts(path).versions).toEqual([version.versionId]);
+  });
+});
+
+describe('Draft.put', () => {
+  it('keeps a revision when a field is present and undefined', () => {
+    let next = 0;
+    const draft = new Draft(new Map(), () => {
+      next += 1;
+      return `r${next}`;
+    });
+    draft.put('terms', ORDER.termId, ORDER);
+    draft.put('terms', ORDER.termId, { ...ORDER, alias: undefined } as Term);
+    expect(draft.revisionIdOf('terms', ORDER.termId)).toBe('r2');
   });
 });

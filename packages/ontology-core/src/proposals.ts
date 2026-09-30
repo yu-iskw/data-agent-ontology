@@ -1,3 +1,5 @@
+import { unorderedColumnPair } from './model.js';
+
 import type {
   Actor,
   Mapping,
@@ -26,10 +28,6 @@ interface Sighting {
   users: Set<string>;
 }
 
-function pairKey(a: string, b: string): [string, string] {
-  return a.localeCompare(b) <= 0 ? [a, b] : [b, a];
-}
-
 /** Successful joins by unordered column pair, with who saw them and where. */
 function sightings(traces: Trace[]): Map<string, Sighting & { pair: [string, string] }> {
   const found = new Map<string, Sighting & { pair: [string, string] }>();
@@ -38,7 +36,7 @@ function sightings(traces: Trace[]): Map<string, Sighting & { pair: [string, str
       continue;
     }
     for (const [a, b] of trace.joins) {
-      const pair = pairKey(a, b);
+      const pair = unorderedColumnPair(a, b);
       const key = pair.join('|');
       const entry = found.get(key) ?? {
         pair,
@@ -46,13 +44,19 @@ function sightings(traces: Trace[]): Map<string, Sighting & { pair: [string, str
         sessions: new Set<string>(),
         users: new Set<string>(),
       };
-      entry.traceIds.push(trace.traceId);
+      if (!entry.traceIds.includes(trace.traceId)) {
+        entry.traceIds.push(trace.traceId);
+      }
       entry.sessions.add(trace.sessionId);
       entry.users.add(trace.actor?.onBehalfOf ?? trace.actor?.id ?? trace.sessionId);
       found.set(key, entry);
     }
   }
   return found;
+}
+
+function mappingRank(role: Mapping['role']): number {
+  return role === 'primary_key' ? 0 : 1;
 }
 
 /** The term that maps a column, preferring a primary-key mapping; ties break by term id. */
@@ -62,8 +66,12 @@ function termOfColumn(
 ): { termId: string; role: Mapping['role'] } | undefined {
   const candidates = mappings
     .filter((mapping) => mapping.columnId === columnId)
-    .sort((a, b) => a.termId.localeCompare(b.termId));
-  return candidates.at(0) && { termId: candidates[0].termId, role: candidates[0].role };
+    .sort((a, b) => mappingRank(a.role) - mappingRank(b.role) || a.termId.localeCompare(b.termId));
+  const chosen = candidates.at(0);
+  if (chosen === undefined) {
+    return undefined;
+  }
+  return { termId: chosen.termId, role: chosen.role };
 }
 
 function joinText(snapshot: OntologySnapshot, from: string, to: string): string {
@@ -101,7 +109,7 @@ function relationFor(
 
 function alreadyKnown(snapshot: OntologySnapshot, pair: [string, string]): boolean {
   return snapshot.relations.some((relation) => {
-    const known = pairKey(relation.fromColumnId, relation.toColumnId);
+    const known = unorderedColumnPair(relation.fromColumnId, relation.toColumnId);
     return known[0] === pair[0] && known[1] === pair[1];
   });
 }

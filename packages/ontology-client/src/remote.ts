@@ -9,7 +9,7 @@ import {
 } from '@data-agent-ontology/ontology-core';
 
 import { checkSqlAgainst, shapeOfSql } from './check-sql.js';
-import { formatContext } from './format.js';
+import { contextFor as readContext } from './context.js';
 
 import type { OntologyClient, OntologyContext, SqlCheck, SqlRun } from './client.js';
 import type { Envelope, ErrorBody, ErrorCode, Method, Requests, Responses } from './protocol.js';
@@ -31,8 +31,6 @@ import type {
   Version,
   WriteOptions,
 } from '@data-agent-ontology/ontology-core';
-
-const MAX_CONTEXT_TERMS = 5;
 
 /** The service refused a request. The code says why; `details` holds what the service returned. */
 export class RemoteError extends Error {
@@ -71,8 +69,8 @@ const REVIVERS: Record<ErrorCode, Reviver> = {
     new ProposalClosedError(details?.proposalId as string, details?.status as Proposal['status']),
   unknown_proposal: (_status, _body, details) =>
     new UnknownProposalError(details?.proposalId as string),
-  unknown_version: (_status, body) =>
-    new UnknownVersionError(body.message.replace('Unknown ontology version: ', '')),
+  unknown_version: (_status, _body, details) =>
+    new UnknownVersionError(typeof details?.versionId === 'string' ? details.versionId : ''),
   unauthorized: asRemote,
   bad_request: asRemote,
   unknown_method: asRemote,
@@ -104,17 +102,8 @@ export class RemoteOntologyClient implements OntologyClient {
     return this.observed(await this.call('resolve', { termIds }));
   }
 
-  async contextFor(question: string): Promise<OntologyContext> {
-    const { versionId, hits } = await this.browse(question);
-    const termIds = hits
-      .filter((hit) => hit.kind === 'term')
-      .slice(0, MAX_CONTEXT_TERMS)
-      .map((hit) => hit.id);
-    if (termIds.length === 0) {
-      return { versionId, text: '', termIds };
-    }
-    const resolved = await this.resolve(termIds);
-    return { versionId: resolved.versionId, text: formatContext(resolved), termIds };
+  contextFor(question: string): Promise<OntologyContext> {
+    return readContext(this, question);
   }
 
   async checkSql(sql: string): Promise<SqlCheck> {

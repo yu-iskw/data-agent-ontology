@@ -142,6 +142,20 @@ describe('two writers revise from the same base', () => {
     ]);
   });
 
+  it('rejects a stale write that puts the base value back over a newer edit', () => {
+    const { ontology } = seeded();
+    const base = ontology.browse('order').versionId;
+    ontology.revise(reviseTerm('order', 'Alice'), { baseVersionId: base, actor: ALICE });
+
+    const conflicts = conflictsOf(() =>
+      ontology.revise(reviseTerm('order', 'One purchase.'), { baseVersionId: base, actor: BOB }),
+    );
+
+    expect(conflicts.map((conflict) => `${conflict.kind}:${conflict.id}`)).toEqual(['terms:order']);
+    expect(ontology.store.get('terms', 'order')?.definition).toBe('Alice');
+    expect(ontology.store.listVersions()).toHaveLength(3);
+  });
+
   it('treats a stale write the head already holds as no conflict', () => {
     const { ontology } = seeded();
     const base = ontology.browse('order').versionId;
@@ -236,6 +250,20 @@ describe('a stale full-scope submission', () => {
     ontology.submitScope(structure('full', { orders: ['order_id', 'amount'] }, observedAt));
 
     expect(ontology.store.get('tables', 'bigquery:proj.sales.refunds')?.active).toBe(false);
+  });
+
+  it('deactivates a column an abandoned version removed when a fresh full snapshot omits it', () => {
+    const clock = new Clock();
+    const ontology = new Ontology(new OntologyStore(clock.now));
+    ontology.submitScope(structure('full', { orders: ['order_id', 'legacy'] }));
+    ontology.submitScope(structure('full', { orders: ['order_id'] }));
+    ontology.rollback('v1');
+    const legacy = `${ORDERS}.legacy`;
+    expect(ontology.store.get('columns', legacy)?.active).toBe(true);
+
+    ontology.submitScope(structure('full', { orders: ['order_id'] }, clock.latest()));
+
+    expect(ontology.store.get('columns', legacy)?.active).toBe(false);
   });
 
   it('keeps a column another agent added to a table the stale scope did observe', () => {

@@ -1,4 +1,4 @@
-export { columnIdOf, isVisible, scopePathOf, tableIdOf } from './model.js';
+export { columnIdOf, isVisible, scopePathOf, tableIdOf, unorderedColumnPair } from './model.js';
 export { ActiveVersionChangedError, MergeConflictError } from './merge.js';
 export { Ontology, ProposalClosedError, UnknownProposalError } from './ontology.js';
 export { DEFAULT_THRESHOLDS } from './proposals.js';
