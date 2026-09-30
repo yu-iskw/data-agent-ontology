@@ -3,14 +3,18 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { Ontology, RevisionError } from '@data-agent-ontology/ontology-core';
+import { Ontology } from '@data-agent-ontology/ontology-core';
 
-import { createOntologyAgent, DEFAULT_MODEL } from './agent.js';
+import { applyProposal } from './apply.js';
+import { DEFAULT_MODEL } from './model.js';
 import { observeWarehouse } from './observe.js';
-import { proposalSchema, toRevisePatch } from './proposal.js';
+import { proposalSchema } from './proposal.js';
+import { RECORDING_FORMAT, readRecording, writeRecording } from './recording.js';
+import { createSeedAgent } from './seed-agent.js';
 import { Warehouse } from './warehouse.js';
 
 import type { Proposal } from './proposal.js';
+import type { Recording } from './recording.js';
 import type { OntologySnapshot } from '@data-agent-ontology/ontology-core';
 import type { Agent } from '@mastra/core/agent';
 
@@ -50,27 +54,11 @@ async function propose(agent: Agent, messages: Message[]): Promise<Proposal> {
   return proposalSchema.parse(result.object);
 }
 
-function applyProposal(ontology: Ontology, proposal: Proposal): string[] {
-  const { patch, problems } = toRevisePatch(proposal, ontology.snapshot());
-  if (problems.length > 0) {
-    return problems;
-  }
-  try {
-    ontology.revise(patch);
-    return [];
-  } catch (error) {
-    if (error instanceof RevisionError) {
-      return error.problems;
-    }
-    throw error;
-  }
-}
-
 async function extractSemantics(
   agent: Agent,
   ontology: Ontology,
   databaseName: string,
-): Promise<void> {
+): Promise<Proposal> {
   const messages: Message[] = [
     { role: 'user', content: taskPrompt(databaseName, ontology.snapshot()) },
   ];
@@ -78,7 +66,7 @@ async function extractSemantics(
     const proposal = await propose(agent, messages);
     const problems = applyProposal(ontology, proposal);
     if (problems.length === 0) {
-      return;
+      return proposal;
     }
     console.error(`Attempt ${attempt} rejected:\n- ${problems.join('\n- ')}`);
     messages.push(
@@ -106,9 +94,49 @@ async function writeArtifact(out: string, ontology: Ontology): Promise<OntologyS
 }
 /* eslint-enable security/detect-non-literal-fs-filename */
 
+interface Run {
+  proposal: Proposal;
+  sql: Recording['sql'];
+  model: string;
+}
+
+/** Runs the agent against the warehouse and returns the accepted proposal with the SQL it ran. */
+async function runLive(warehouse: Warehouse, ontology: Ontology, model: string): Promise<Run> {
+  const sql: Recording['sql'] = [];
+  const agent = createSeedAgent(warehouse, {
+    model,
+    onQuery: (statement, error) => {
+      sql.push({ sql: statement, ...(error && { error }) });
+      console.error(`[run_sql ${sql.length}] ${statement.replaceAll(/\s+/g, ' ').slice(0, 160)}`);
+    },
+  });
+  const proposal = await extractSemantics(agent, ontology, warehouse.databaseName);
+  return { proposal, sql, model };
+}
+
+/** Applies a recorded proposal without a model, so a run can be repeated offline. */
+async function runReplay(ontology: Ontology, path: string): Promise<Run> {
+  const recording = await readRecording(path);
+  const problems = applyProposal(ontology, recording.proposal);
+  if (problems.length > 0) {
+    throw new Error(`The recorded proposal no longer applies:\n- ${problems.join('\n- ')}`);
+  }
+  return { proposal: recording.proposal, sql: recording.sql, model: recording.model };
+}
+
+/*
+ * One-time seeder entry point: fills an empty ontology, or replays a recording of such a run.
+ * The analyst agent (./agent.ts, `pnpm ask`) is what a user integrates.
+ */
 async function main(): Promise<void> {
   const { values } = parseArgs({
-    options: { out: { type: 'string' }, model: { type: 'string' } },
+    options: {
+      out: { type: 'string' },
+      model: { type: 'string' },
+      'scope-only': { type: 'boolean', default: false },
+      record: { type: 'string' },
+      replay: { type: 'string' },
+    },
   });
   const out = resolve(values.out ?? DEFAULT_OUT);
   const model = values.model ?? process.env.ONTOLOGY_AGENT_MODEL ?? DEFAULT_MODEL;
@@ -116,28 +144,48 @@ async function main(): Promise<void> {
   try {
     const ontology = new Ontology();
     ontology.submitScope(await observeWarehouse(warehouse));
-    let queries = 0;
-    const agent = createOntologyAgent(warehouse, {
-      model,
-      onQuery: (sql) => {
-        queries += 1;
-        console.error(`[run_sql ${queries}] ${sql.replaceAll(/\s+/g, ' ').slice(0, 160)}`);
-      },
-    });
-    await extractSemantics(agent, ontology, warehouse.databaseName);
+    if (values['scope-only']) {
+      const observed = await writeArtifact(out, ontology);
+      console.log(`Wrote ${out}: structure only, ${observed.tables.length} tables, no semantics`);
+      return;
+    }
+    const run = values.replay
+      ? await runReplay(ontology, resolve(values.replay))
+      : await runLive(warehouse, ontology, model);
+    if (values.record) {
+      await writeRecording(resolve(values.record), {
+        format: RECORDING_FORMAT,
+        model: run.model,
+        sql: run.sql,
+        proposal: run.proposal,
+      });
+    }
     const snapshot = await writeArtifact(out, ontology);
     console.log(
       `Wrote ${out}: ${snapshot.domains.length} domains, ${snapshot.tables.length} tables, ` +
         `${snapshot.terms.length} terms, ${snapshot.mappings.length} mappings, ` +
         `${snapshot.relations.length} relations, ${snapshot.constraints.length} constraints ` +
-        `(model ${model}, ${queries} SQL queries)`,
+        `(${values.replay ? 'replayed' : `model ${run.model}`}, ${run.sql.length} SQL queries)`,
     );
   } finally {
     warehouse.close();
   }
 }
 
+function isMissingCredentials(error: unknown): boolean {
+  const text = error instanceof Error ? `${error.message} ${String(error.cause)}` : String(error);
+  return text.includes('Could not load the default credentials');
+}
+
 main().catch((error: unknown) => {
-  console.error(error);
+  if (isMissingCredentials(error)) {
+    console.error(
+      'No Google Application Default Credentials: run `gcloud auth application-default login` ' +
+        'or set GOOGLE_APPLICATION_CREDENTIALS for project ubie-yu-sandbox (Vertex, location global). ' +
+        'Use --replay <recording.json> to run without a model.',
+    );
+  } else {
+    console.error(error);
+  }
   process.exitCode = 1;
 });

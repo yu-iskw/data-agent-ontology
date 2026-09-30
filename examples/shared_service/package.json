@@ -1,0 +1,18 @@
+{
+  "name": "@data-agent-ontology/example-shared-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Two analytics agents sharing one ontology service, with merge and conflict.",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-client": "workspace:*",
+    "@data-agent-ontology/ontology-core": "workspace:*",
+    "@data-agent-ontology/ontology-server": "workspace:*"
+  }
+}

@@ -23,11 +23,16 @@ export class RevisionError extends Error {
 const MAX_DOMAIN_DEPTH = 32;
 
 function slug(text: string): string {
-  return text
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '_')
-    .replaceAll(/^_+|_+$/g, '')
-    .slice(0, 48);
+  const underscored = text.toLowerCase().replaceAll(/[^a-z0-9]+/g, '_');
+  let start = 0;
+  let end = underscored.length;
+  while (start < end && underscored.charCodeAt(start) === 95) {
+    start += 1;
+  }
+  while (end > start && underscored.charCodeAt(end - 1) === 95) {
+    end -= 1;
+  }
+  return underscored.slice(start, end).slice(0, 48);
 }
 
 function holdsDifferentRecord(existing: object, next: object): boolean {

@@ -1,7 +1,13 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { Ontology } from '@data-agent-ontology/ontology-core';
 import { describe, expect, it } from 'vitest';
 
+import { applyProposal, EXTRACTION_ACTOR } from './apply.js';
 import { toRevisePatch } from './proposal.js';
+import { RECORDING_FORMAT, readRecording, writeRecording } from './recording.js';
 
 import type { Proposal } from './proposal.js';
 
@@ -157,3 +163,61 @@ describe('toRevisePatch', () => {
     ]);
   });
 });
+
+/* eslint-disable security/detect-non-literal-fs-filename -- paths are inside a fresh temp directory */
+describe('replaying a recorded run', () => {
+  async function scratch(): Promise<string> {
+    return join(await mkdtemp(join(tmpdir(), 'recording-')), 'run.json');
+  }
+
+  it('applies a recording to the same ontology as applying the proposal directly', async () => {
+    const path = await scratch();
+    await writeRecording(path, {
+      format: RECORDING_FORMAT,
+      model: 'fixture-model',
+      sql: [{ sql: 'SELECT 1' }, { sql: 'SELEC 1', error: 'Parser Error' }],
+      proposal: PROPOSAL,
+    });
+    const recording = await readRecording(path);
+    expect(recording).toMatchObject({
+      model: 'fixture-model',
+      sql: [{ sql: 'SELECT 1' }, { error: 'Parser Error' }],
+    });
+
+    const direct = ontologyWithWidgets();
+    const replayed = ontologyWithWidgets();
+    expect(applyProposal(direct, PROPOSAL)).toEqual([]);
+    expect(applyProposal(replayed, recording.proposal)).toEqual([]);
+    expect(replayed.snapshot()).toEqual({
+      ...direct.snapshot(),
+      version: replayed.snapshot().version,
+    });
+    expect(replayed.store.activeVersion?.actor).toEqual(EXTRACTION_ACTOR);
+  });
+
+  it('reports problems instead of applying a recording that no longer fits the catalog', () => {
+    const other = new Ontology();
+    other.submitScope({
+      scope: [{ engine: 'duckdb', path: 'other', completeness: 'full' }],
+      tables: [{ engine: 'duckdb', path: 'other.things', kind: 'table' }],
+      columns: [
+        {
+          engine: 'duckdb',
+          tablePath: 'other.things',
+          name: 'id',
+          dataType: 'INTEGER',
+          ordinalPosition: 1,
+        },
+      ],
+    });
+    expect(applyProposal(other, PROPOSAL).length).toBeGreaterThan(0);
+    expect(other.snapshot().terms).toEqual([]);
+  });
+
+  it('rejects a file that is not a recording', async () => {
+    const path = await scratch();
+    await writeFile(path, JSON.stringify({ format: 'something-else' }));
+    await expect(readRecording(path)).rejects.toThrow();
+  });
+});
+/* eslint-enable security/detect-non-literal-fs-filename */

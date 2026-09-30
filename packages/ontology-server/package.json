@@ -1,0 +1,29 @@
+{
+  "name": "@data-agent-ontology/ontology-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One process that owns an ontology database file and serves the core over HTTP with a static bearer token.",
+  "keywords": [
+    "ontology",
+    "analytics-agent"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "start": "tsx src/main.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-core": "workspace:*",
+    "@data-agent-ontology/ontology-client": "workspace:*"
+  },
+  "devDependencies": {
+    "@ladybugdb/core": "0.20.4",
+    "tsx": "^4.23.15"
+  }
+}

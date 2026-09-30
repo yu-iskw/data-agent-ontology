@@ -31,7 +31,7 @@ const CUSTOMER: Term = {
   drifted: false,
 };
 
-const SCHEMA = ['ActivePointer', 'Includes', 'OntologyVersion', 'Revision'];
+const SCHEMA = ['ActivePointer', 'Includes', 'OntologyVersion', 'Revision', 'WorkItem'];
 
 function databasePath(): string {
   return join(mkdtempSync(join(tmpdir(), 'ontology-store-')), 'ontology.lbdb');

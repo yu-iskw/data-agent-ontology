@@ -21,6 +21,10 @@
     },
     "eval/*": {
       "project": ["src/**/*.ts"]
+    },
+    "packages/ontology-server": {
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["@ladybugdb/core"]
     }
   }
 }

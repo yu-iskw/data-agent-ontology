@@ -1,6 +1,10 @@
+import { LocalOntologyClient } from '@data-agent-ontology/ontology-client';
+import { Ontology } from '@data-agent-ontology/ontology-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createOntologyAgent, DEFAULT_MODEL } from './agent.js';
+import { createAnalystAgent } from './agent.js';
+import { DEFAULT_MODEL } from './model.js';
+import { createSeedAgent } from './seed-agent.js';
 import { createRunSqlTool } from './sql-tool.js';
 import { Warehouse } from './warehouse.js';
 
@@ -68,10 +72,21 @@ describe('Warehouse', () => {
 });
 
 describe('run_sql tool', () => {
-  it('is the only tool the agent has', async () => {
-    const agent = createOntologyAgent(warehouse, { model: 'openai/gpt-5.5' });
+  it('is the only tool the seeder has', async () => {
+    const agent = createSeedAgent(warehouse, { model: 'openai/gpt-5.5' });
     expect(agent.model).toBe('openai/gpt-5.5');
     expect(Object.keys(await agent.listTools())).toEqual(['run_sql']);
+  });
+
+  it("is the analyst's only SQL tool, next to the two ontology tools", async () => {
+    const agent = createAnalystAgent(warehouse, new LocalOntologyClient(new Ontology()), {
+      model: 'openai/gpt-5.5',
+    });
+    expect(Object.keys(await agent.listTools()).sort()).toEqual([
+      'ontology_lookup',
+      'ontology_note',
+      'run_sql',
+    ]);
   });
 
   it('opens the suffix of a google-vertex id and leaves the api key unset', () => {
@@ -79,9 +94,9 @@ describe('run_sql tool', () => {
     process.env.GOOGLE_VERTEX_API_KEY = 'express-key';
     try {
       expect(DEFAULT_MODEL).toBe('google-vertex/gemini-3.8-flash');
-      const chosen = createOntologyAgent(warehouse, { model: 'google-vertex/gemini-2.5-pro' });
+      const chosen = createSeedAgent(warehouse, { model: 'google-vertex/gemini-2.5-pro' });
       expect(chosen.model).toMatchObject({ modelId: 'gemini-2.5-pro' });
-      const fallback = createOntologyAgent(warehouse);
+      const fallback = createSeedAgent(warehouse);
       expect(fallback.model).toMatchObject({ modelId: 'gemini-3.8-flash' });
       expect(process.env.GOOGLE_VERTEX_API_KEY).toBeUndefined();
     } finally {
