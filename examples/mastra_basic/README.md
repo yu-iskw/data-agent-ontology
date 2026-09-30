@@ -32,7 +32,7 @@ export const agent = new Agent(
 pnpm --filter @data-agent-ontology/example-mastra-basic ask --ontology out/ontology-store.json "<question>"
 ```
 
-`ask` needs a model (Vertex, below). It loads a copy of the store, so notes and traces last for that process only; for shared use, point the agent at an `ontology-server` with `RemoteOntologyClient`. The same loops without Mastra are in [`examples/client_loops`](../client_loops/README.md), and two users on one service are in [`examples/shared_service`](../shared_service/README.md).
+`ask` needs a model (Vertex, below). `--ontology out/ontology.lbdb` reopens that file, so notes and traces stay for the next run; a `.json` path still loads a copy for that process. For several processes on one file, point the agents at an `ontology-server` with `RemoteOntologyClient`. The same loops without Mastra are in [`examples/client_loops`](../client_loops/README.md), and two users on one service are in [`examples/shared_service`](../shared_service/README.md).
 
 ## One-time seeding
 

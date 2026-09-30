@@ -5,6 +5,7 @@ import type {
   Proposal,
   ProposalDraft,
   RelationInput,
+  RevisePatch,
   Trace,
 } from './model.js';
 
@@ -152,6 +153,8 @@ export interface NoteInput {
   statement: string;
   /** SQL that shows the statement holds. */
   evidenceSql?: string;
+  /** Traces that show the statement. Omitted notes cite none. */
+  traceIds?: string[];
   sessionId: string;
   actor: Actor;
 }
@@ -176,7 +179,7 @@ export function proposeNote(snapshot: OntologySnapshot, note: NoteInput): Propos
       constraints: [{ termId: note.termId, text: note.statement, evidence: summary }],
     },
     baseVersionId: snapshot.version.versionId,
-    evidence: { summary, traceIds: [] },
+    evidence: { summary, traceIds: [...(note.traceIds ?? [])] },
     proposer: note.actor,
     sessions: [note.sessionId],
     users: [note.actor.onBehalfOf ?? note.actor.id],
@@ -205,5 +208,110 @@ export function editedPatch(proposal: Proposal, edits: ProposalEdits = {}): Prop
       delete constraint.constraintId;
     }
   }
+  switch (proposal.kind) {
+    case 'constraint':
+    case 'relation':
+      patch.traceIds = [...proposal.evidence.traceIds];
+      break;
+    default: {
+      const unexpected: never = proposal.kind;
+      throw new Error(`Unexpected proposal kind: ${String(unexpected)}`);
+    }
+  }
   return patch;
+}
+
+function activeIds<T>(records: readonly T[], idOf: (record: T) => string): Set<string> {
+  return new Set(records.map((record) => idOf(record)));
+}
+
+function requireReferenced(
+  problems: string[],
+  kind: 'term' | 'table' | 'column',
+  id: string,
+  active: ReadonlySet<string>,
+): void {
+  if (active.has(id)) {
+    return;
+  }
+  const problem = `Referenced ${kind} ${id} does not exist or is inactive`;
+  if (!problems.includes(problem)) {
+    problems.push(problem);
+  }
+}
+
+/** Ids the patch points at, which must already be active. Records the patch creates are not included. */
+function referencedProblems(snapshot: OntologySnapshot, patch: RevisePatch): string[] {
+  const terms = activeIds(snapshot.terms, (term) => term.termId);
+  const tables = activeIds(snapshot.tables, (table) => table.tableId);
+  const columns = activeIds(snapshot.columns, (column) => column.columnId);
+  const problems: string[] = [];
+  for (const constraint of patch.constraints ?? []) {
+    requireReferenced(problems, 'term', constraint.termId, terms);
+  }
+  for (const relation of patch.relations ?? []) {
+    requireReferenced(problems, 'term', relation.fromTermId, terms);
+    requireReferenced(problems, 'term', relation.toTermId, terms);
+    requireReferenced(problems, 'column', relation.fromColumnId, columns);
+    requireReferenced(problems, 'column', relation.toColumnId, columns);
+  }
+  for (const mapping of patch.mappings ?? []) {
+    requireReferenced(problems, 'term', mapping.termId, terms);
+    requireReferenced(problems, 'column', mapping.columnId, columns);
+  }
+  for (const membership of patch.memberships ?? []) {
+    requireReferenced(problems, 'table', membership.tableId, tables);
+  }
+  return problems;
+}
+
+/**
+ * A second open constraint on the same term with different text must not be accepted over the
+ * first. Identical text never becomes a second proposal; `proposeNote` deduplicates that key.
+ */
+function contradictoryConstraintProblems(
+  open: readonly Proposal[],
+  proposal: Proposal,
+  patch: RevisePatch,
+): string[] {
+  const problems: string[] = [];
+  const reported = new Set<string>();
+  for (const constraint of patch.constraints ?? []) {
+    if (reported.has(constraint.termId)) {
+      continue;
+    }
+    const clash = open.some(
+      (other) =>
+        other.proposalId !== proposal.proposalId &&
+        other.kind === 'constraint' &&
+        (other.patch.constraints ?? []).some(
+          (candidate) =>
+            candidate.termId === constraint.termId && candidate.text !== constraint.text,
+        ),
+    );
+    if (!clash) {
+      continue;
+    }
+    reported.add(constraint.termId);
+    problems.push(
+      `Term ${constraint.termId} has another open constraint proposal with different text`,
+    );
+  }
+  return problems;
+}
+
+/**
+ * Problems that refuse acceptance before any version is written. Checked against the active
+ * snapshot, so inactive records are absent.
+ */
+export function acceptanceProblems(
+  snapshot: OntologySnapshot,
+  open: readonly Proposal[],
+  proposal: Proposal,
+  patch: RevisePatch,
+): string[] {
+  return [
+    ...referencedProblems(snapshot, patch),
+    ...contradictoryConstraintProblems(open, proposal, patch),
+  ];
 }

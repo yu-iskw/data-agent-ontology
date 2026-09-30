@@ -1,8 +1,14 @@
 import { isVisible } from './model.js';
-import { DEFAULT_THRESHOLDS, editedPatch, proposeNote, proposeRelations } from './proposals.js';
+import {
+  acceptanceProblems,
+  DEFAULT_THRESHOLDS,
+  editedPatch,
+  proposeNote,
+  proposeRelations,
+} from './proposals.js';
 import { browseRecords, resolveRecords, withoutRevisionFlag } from './read.js';
 import { applyRevert, RevertRootError } from './revert.js';
-import { applyRevision } from './revise.js';
+import { applyRevision, RevisionError } from './revise.js';
 import { OntologyStore, UnknownVersionError } from './store.js';
 import { applySubmission } from './submit.js';
 
@@ -186,12 +192,25 @@ export class Ontology {
   }
 
   /**
-   * A curator accepts a proposal: its patch is revised against the version it came from, so an
-   * overlapping change since then throws `MergeConflictError` and the proposal stays open.
+   * A curator accepts a proposal. Referenced terms, tables, and columns must exist and be
+   * active, and a second open constraint on the same term with different text is refused.
+   * That check throws `RevisionError` and leaves the proposal open. The patch is then revised
+   * against the version it came from, so an overlapping change since then throws
+   * `MergeConflictError` and the proposal stays open.
    */
   acceptProposal(proposalId: string, curator: Actor, edits?: ProposalEdits): Proposal {
     const proposal = this.openProposal(proposalId);
-    const version = this.revise(editedPatch(proposal, edits), {
+    const patch = editedPatch(proposal, edits);
+    const problems = acceptanceProblems(
+      this.snapshot(),
+      this.listProposals('open'),
+      proposal,
+      patch,
+    );
+    if (problems.length > 0) {
+      throw new RevisionError(problems);
+    }
+    const version = this.revise(patch, {
       baseVersionId: proposal.baseVersionId,
       actor: curator,
       proposalId,

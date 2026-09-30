@@ -245,7 +245,59 @@ describe('revise', () => {
     expect(snapshot.relations.map((r) => r.relationId)).toEqual(['customer_places_order']);
     const sources = new Set(snapshot.evidence.map((e) => e.source));
     expect(sources).toEqual(new Set(['revise']));
+    expect(snapshot.evidence.every((item) => item.traceIds === undefined)).toBe(true);
     expect(snapshot.evidence.map((e) => e.targetId)).toContain('customer_places_order');
+  });
+
+  it('cites constraints and relations from traces and leaves domains and terms as revise', () => {
+    const ontology = seeded();
+    ontology.revise({
+      summary: 'seen in traces',
+      traceIds: ['t1', 't2'],
+      domains: [{ domainId: 'ops', name: 'Ops', parentDomainId: null }],
+      terms: [
+        { termId: 'refund', name: 'refund', domainId: 'sales', definition: 'Money returned.' },
+      ],
+      constraints: [{ termId: 'order', text: 'Amount is positive.' }],
+      relations: [
+        {
+          name: 'ships',
+          fromTermId: 'customer',
+          toTermId: 'order',
+          fromColumnId: `${CUSTOMERS}.customer_id`,
+          toColumnId: `${ORDERS}.customer_id`,
+          join: 'customers.customer_id = orders.customer_id',
+        },
+      ],
+    });
+    const evidence = ontology.snapshot().evidence;
+    expect(evidence.find((item) => item.targetId === 'ops')).toMatchObject({ source: 'revise' });
+    expect(evidence.find((item) => item.targetId === 'ops')?.traceIds).toBeUndefined();
+    expect(evidence.find((item) => item.targetId === 'refund')).toMatchObject({ source: 'revise' });
+    expect(evidence.find((item) => item.targetId === 'refund')?.traceIds).toBeUndefined();
+    expect(evidence.find((item) => item.targetId === 'order:amount_is_positive')).toMatchObject({
+      source: 'trajectory',
+      traceIds: ['t1', 't2'],
+    });
+    expect(evidence.find((item) => item.targetId === 'customer_ships_order')).toMatchObject({
+      source: 'trajectory',
+      traceIds: ['t1', 't2'],
+    });
+  });
+
+  it('records an empty trace id list as trajectory evidence', () => {
+    const ontology = seeded();
+    ontology.revise({
+      summary: 'seen',
+      traceIds: [],
+      constraints: [{ termId: 'order', text: 'Amount is positive.' }],
+    });
+    expect(
+      ontology.snapshot().evidence.find((item) => item.targetId === 'order:amount_is_positive'),
+    ).toMatchObject({ source: 'trajectory', traceIds: [] });
+    expect(ontology.snapshot().evidence.find((item) => item.targetId === 'order')?.traceIds).toBe(
+      undefined,
+    );
   });
 });
 
