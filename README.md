@@ -2,11 +2,40 @@
 
 A versioned ontology that an existing data analytics agent uses while it analyzes data. The agent keeps its instructions, tools, workspace, skills, and its A2A or MCP host. [`withOntology`](packages/ontology-mastra/src/with-ontology.ts) only appends a short usage note, adds `ontology_lookup` and `ontology_note`, appends the `ontology-context` input processor, and wraps the SQL tools you name. The SQL check is advisory and never blocks a statement.
 
-Analyst processes do not open the database file. [Ladybug](https://docs.ladybugdb.com/concurrency) allows one writer process per file, so one [`ontology-server`](packages/ontology-server) process owns each `.lbdb` and agents call it over HTTP. Use one file per workspace, and point that workspace's agents at its server.
+## One process, one file
 
-## Attach it to an existing Mastra agent
+One process, one file, no port. Open the Ladybug file in this process:
+
+```ts
+const ontology = new LocalOntologyClient(
+  new Ontology(new OntologyStore(() => new Date(), './ontology.lbdb')),
+);
+```
 
 Build the agent config the way you do today, then pass it through `withOntology`. `instructions` must be a string.
+
+```ts
+import { LocalOntologyClient } from '@data-agent-ontology/ontology-client';
+import { Ontology, OntologyStore } from '@data-agent-ontology/ontology-core';
+import { withOntology } from '@data-agent-ontology/ontology-mastra';
+import { Agent } from '@mastra/core/agent';
+
+const ontology = new LocalOntologyClient(
+  new Ontology(new OntologyStore(() => new Date(), './ontology.lbdb')),
+);
+
+export const agent = new Agent(
+  withOntology({ id: 'analyst', instructions, model, tools: { run_sql } }, ontology, {
+    sqlTools: ['run_sql'],
+  }),
+);
+```
+
+The same loops without Mastra are in [`examples/client_loops`](examples/client_loops/README.md).
+
+## Shared file
+
+[Ladybug](https://docs.ladybugdb.com/concurrency) allows one writer process per file. When several processes share one `.lbdb`, one [`ontology-server`](packages/ontology-server) process owns the file and the others call it over HTTP. Use one file per workspace, and point that workspace's agents at its server.
 
 ```ts
 import { RemoteOntologyClient } from '@data-agent-ontology/ontology-client';
@@ -25,7 +54,7 @@ export const agent = new Agent(
 );
 ```
 
-For one process and one file, use `LocalOntologyClient` around an `Ontology` from `@data-agent-ontology/ontology-core` instead of the remote client. The same loops without Mastra are in [`examples/client_loops`](examples/client_loops/README.md). Two clients on one HTTP service are in [`examples/shared_service`](examples/shared_service/README.md).
+Two clients on one HTTP service are in [`examples/shared_service`](examples/shared_service/README.md).
 
 Start the service with:
 
