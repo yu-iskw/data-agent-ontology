@@ -99,7 +99,7 @@ Use only paths and columns that exist in the catalog. Keep ids stable and in sna
 
 interface OntologyAgentOptions {
   model?: string;
-  onQuery?: (sql: string) => void;
+  onQuery?: (sql: string, error?: string) => void;
 }
 
 /** Opens the model id on Vertex with Application Default Credentials. */

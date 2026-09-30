@@ -6,7 +6,10 @@ import type { Warehouse } from './warehouse.js';
 const SQL_TOOL_ROW_LIMIT = 200;
 
 /** The agent's only tool: one read-only SQL statement against the locked-down DuckDB file. */
-export function createRunSqlTool(warehouse: Warehouse, onQuery?: (sql: string) => void) {
+export function createRunSqlTool(
+  warehouse: Warehouse,
+  onQuery?: (sql: string, error?: string) => void,
+) {
   return createTool({
     id: 'run_sql',
     description:
@@ -17,11 +20,14 @@ export function createRunSqlTool(warehouse: Warehouse, onQuery?: (sql: string) =
       sql: z.string().describe('A single DuckDB SQL statement.'),
     }),
     execute: async ({ sql }) => {
-      onQuery?.(sql);
       try {
-        return await warehouse.query(sql, SQL_TOOL_ROW_LIMIT);
+        const result = await warehouse.query(sql, SQL_TOOL_ROW_LIMIT);
+        onQuery?.(sql);
+        return result;
       } catch (error) {
-        return { error: error instanceof Error ? error.message : String(error) };
+        const message = error instanceof Error ? error.message : String(error);
+        onQuery?.(sql, message);
+        return { error: message };
       }
     },
   });
