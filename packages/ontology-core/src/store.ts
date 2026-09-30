@@ -349,7 +349,7 @@ export class Draft {
   }
 }
 
-export type WorkItemKind = 'trace' | 'proposal';
+type WorkItemKind = 'trace' | 'proposal';
 
 interface CommitOptions extends WriteOptions {
   baseVersionId?: string;

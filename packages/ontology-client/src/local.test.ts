@@ -14,7 +14,7 @@ describe('contextFor', () => {
   it('formats the resolved slice with its version', async () => {
     const context = await client().contextFor('total order amount per customer');
     expect(context.versionId).toBe('v2');
-    expect(context.termIds).toEqual(['order', 'customer']);
+    expect(context.termIds).toEqual(['order', 'customer', 'refund']);
     expect(context.text).toContain('- order [sales]: One purchase.');
     expect(context.text).toContain('column proj.sales.orders.customer_id INT64 (fk)');
     expect(context.text).toContain('relation customer places order: customers.customer_id');

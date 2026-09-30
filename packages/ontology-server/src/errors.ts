@@ -1,12 +1,14 @@
 import {
   ActiveVersionChangedError,
   MergeConflictError,
+  ProposalClosedError,
   ResolveLimitError,
   RevertConflictError,
   RevertRootError,
   RevisionError,
   ScopeViolationError,
   SubmissionError,
+  UnknownProposalError,
   UnknownVersionError,
 } from '@data-agent-ontology/ontology-core';
 
@@ -41,43 +43,57 @@ function failure(
   };
 }
 
+type Mapper = (error: unknown) => HttpFailure | undefined;
+
+function on<T extends Error>(
+  type: new (...args: never[]) => T,
+  status: number,
+  code: ErrorBody['code'],
+  details?: (error: T) => unknown,
+): Mapper {
+  return (error) =>
+    error instanceof type ? failure(status, error, code, details?.(error)) : undefined;
+}
+
+/** Ordered: the first mapper that recognizes the error decides the reply. */
+const MAPPERS: Mapper[] = [
+  on(ServiceError, 400, 'bad_request'),
+  on(MergeConflictError, 409, 'merge_conflict', (error) => ({
+    baseVersionId: error.baseVersionId,
+    headVersionId: error.headVersionId,
+    conflicts: error.conflicts,
+  })),
+  on(ActiveVersionChangedError, 409, 'active_version_changed', (error) => ({
+    expected: error.expected,
+    actual: error.actual,
+  })),
+  on(RevertConflictError, 409, 'revert_conflict', (error) => ({
+    versionId: error.versionId,
+    conflicts: error.conflicts,
+  })),
+  on(ProposalClosedError, 409, 'proposal_closed', (error) => ({
+    proposalId: error.proposalId,
+    status: error.status,
+  })),
+  on(UnknownProposalError, 404, 'unknown_proposal', (error) => ({ proposalId: error.proposalId })),
+  on(RevisionError, 422, 'revision_rejected', (error) => ({ problems: error.problems })),
+  on(UnknownVersionError, 404, 'unknown_version'),
+  on(SubmissionError, 422, 'rejected'),
+  on(ScopeViolationError, 422, 'rejected'),
+  on(ResolveLimitError, 422, 'rejected'),
+  on(RevertRootError, 422, 'rejected'),
+];
+
 /** Maps a thrown error to the status and body the client turns back into the same error class. */
 export function toFailure(error: unknown): HttpFailure {
   if (error instanceof ServiceError) {
     return failure(error.status, error, error.code);
   }
-  if (error instanceof MergeConflictError) {
-    return failure(409, error, 'merge_conflict', {
-      baseVersionId: error.baseVersionId,
-      headVersionId: error.headVersionId,
-      conflicts: error.conflicts,
-    });
-  }
-  if (error instanceof ActiveVersionChangedError) {
-    return failure(409, error, 'active_version_changed', {
-      expected: error.expected,
-      actual: error.actual,
-    });
-  }
-  if (error instanceof RevertConflictError) {
-    return failure(409, error, 'revert_conflict', {
-      versionId: error.versionId,
-      conflicts: error.conflicts,
-    });
-  }
-  if (error instanceof RevisionError) {
-    return failure(422, error, 'revision_rejected', { problems: error.problems });
-  }
-  if (error instanceof UnknownVersionError) {
-    return failure(404, error, 'unknown_version');
-  }
-  if (
-    error instanceof SubmissionError ||
-    error instanceof ScopeViolationError ||
-    error instanceof ResolveLimitError ||
-    error instanceof RevertRootError
-  ) {
-    return failure(422, error, 'rejected');
+  for (const mapper of MAPPERS) {
+    const mapped = mapper(error);
+    if (mapped) {
+      return mapped;
+    }
   }
   return {
     status: 500,

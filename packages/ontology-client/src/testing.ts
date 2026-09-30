@@ -6,12 +6,14 @@ import type { RevisePatch, Submission } from '@data-agent-ontology/ontology-core
 
 export const ORDERS = 'bigquery:proj.sales.orders';
 export const CUSTOMERS = 'bigquery:proj.sales.customers';
+export const REFUNDS = 'bigquery:proj.sales.refunds';
 
 export const STRUCTURE: Submission = {
   scope: [{ engine: 'bigquery', path: 'proj.sales', completeness: 'full' }],
   tables: [
     { engine: 'bigquery', path: 'proj.sales.orders', kind: 'table' },
     { engine: 'bigquery', path: 'proj.sales.customers', kind: 'table' },
+    { engine: 'bigquery', path: 'proj.sales.refunds', kind: 'table' },
   ],
   columns: [
     ['orders', 'order_id', 'INT64'],
@@ -19,6 +21,8 @@ export const STRUCTURE: Submission = {
     ['orders', 'amount', 'NUMERIC'],
     ['customers', 'customer_id', 'INT64'],
     ['customers', 'name', 'STRING'],
+    ['refunds', 'refund_id', 'INT64'],
+    ['refunds', 'order_id', 'INT64'],
   ].map(([table, name, dataType], index) => ({
     engine: 'bigquery' as const,
     tablePath: `proj.sales.${table}`,
@@ -37,16 +41,20 @@ export const SEMANTICS: RevisePatch = {
   memberships: [
     { tableId: ORDERS, domainIds: ['sales'] },
     { tableId: CUSTOMERS, domainIds: ['crm'] },
+    { tableId: REFUNDS, domainIds: ['sales'] },
   ],
   terms: [
     { termId: 'order', name: 'order', domainId: 'sales', definition: 'One purchase.' },
     { termId: 'customer', name: 'customer', domainId: 'crm', definition: 'A buyer.' },
+    { termId: 'refund', name: 'refund', domainId: 'sales', definition: 'Money returned.' },
   ],
   mappings: [
     { termId: 'order', columnId: `${ORDERS}.order_id`, role: 'primary_key' },
     { termId: 'order', columnId: `${ORDERS}.customer_id`, role: 'foreign_key' },
     { termId: 'order', columnId: `${ORDERS}.amount`, role: 'attribute' },
     { termId: 'customer', columnId: `${CUSTOMERS}.customer_id`, role: 'primary_key' },
+    { termId: 'refund', columnId: `${REFUNDS}.refund_id`, role: 'primary_key' },
+    { termId: 'refund', columnId: `${REFUNDS}.order_id`, role: 'foreign_key' },
   ],
   relations: [
     {
@@ -109,10 +117,9 @@ async function disjointMerge(client: OntologyClient): Promise<void> {
   const versions = await client.listVersions();
   expect(versions.map((version) => version.actor)).toEqual([undefined, undefined, ALICE, BOB]);
   const snapshot = await client.snapshot();
-  expect(snapshot.terms.map((term) => term.definition).sort()).toEqual([
-    ALICE_TEXT,
-    'Bob: a buyer',
-  ]);
+  const definitions = snapshot.terms.map((term) => term.definition);
+  expect(definitions).toContain(ALICE_TEXT);
+  expect(definitions).toContain('Bob: a buyer');
 }
 
 async function overlappingConflict(client: OntologyClient): Promise<void> {
@@ -143,6 +150,46 @@ async function rejectedRevision(client: OntologyClient): Promise<void> {
   expect(failure).toHaveProperty('problems.0', 'Constraint targets unknown term missing');
 }
 
+const CURATOR = { id: 'curator', onBehalfOf: 'yu' };
+const REFUND_JOIN = 'SELECT 1 FROM refunds r JOIN orders o ON r.order_id = o.order_id';
+
+async function relationFromReplays(client: OntologyClient): Promise<void> {
+  for (const sessionId of ['s1', 's1', 's2']) {
+    const trace = await client.recordSql({ sql: REFUND_JOIN, sessionId, outcome: 'ok' });
+    expect(trace).toMatchObject({ tableIds: [REFUNDS, ORDERS], versionId: 'v2' });
+  }
+  const [proposal, ...rest] = await client.proposeRelations();
+  expect(rest).toEqual([]);
+  expect(proposal.patch.relations?.[0]).toMatchObject({ fromTermId: 'order', toTermId: 'refund' });
+  const accepted = await client.acceptProposal(proposal.proposalId, CURATOR, {
+    name: 'refunded_by',
+  });
+  expect(accepted).toMatchObject({ status: 'accepted', decidedBy: CURATOR });
+  const snapshot = await client.snapshot();
+  expect(snapshot.relations.map((relation) => relation.name)).toContain('refunded_by');
+  const closed = await failureOf(client.acceptProposal(proposal.proposalId, CURATOR));
+  expect(closed).toMatchObject({ name: 'ProposalClosedError' });
+}
+
+async function noteThenReject(client: OntologyClient): Promise<void> {
+  const note = await client.note({
+    termId: 'order',
+    statement: 'Exclude tax lines.',
+    sessionId: 's1',
+    actor: { id: 'agent-a' },
+  });
+  expect((await client.listProposals('open')).map((proposal) => proposal.proposalId)).toEqual([
+    note.proposalId,
+  ]);
+  await client.rejectProposal(note.proposalId, CURATOR);
+  expect(await client.listProposals('open')).toEqual([]);
+  expect((await client.snapshot()).constraints.map((c) => c.text)).not.toContain(
+    'Exclude tax lines.',
+  );
+  const missing = await failureOf(client.rejectProposal('p99', CURATOR));
+  expect(missing).toMatchObject({ name: 'UnknownProposalError' });
+}
+
 const CASES: [string, (client: OntologyClient) => Promise<void>][] = [
   ['builds context and checks SQL against the active version', contextAndSql],
   ['records the actor and merges a disjoint write from an older base', disjointMerge],
@@ -152,6 +199,8 @@ const CASES: [string, (client: OntologyClient) => Promise<void>][] = [
   ],
   ['rejects a move from the wrong active version and reverts a change', moveAndRevert],
   ['reports a rejected revision with its problems', rejectedRevision],
+  ['proposes and accepts a relation from replayed joins', relationFromReplays],
+  ['files a note as a proposal a curator can reject', noteThenReject],
 ];
 
 /**

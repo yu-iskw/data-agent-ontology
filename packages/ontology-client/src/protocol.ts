@@ -1,11 +1,19 @@
 import type {
+  Actor,
   BrowseResult,
   MoveOptions,
+  NoteInput,
   OntologySnapshot,
+  Proposal,
+  ProposalEdits,
+  ProposalStatus,
+  ProposerThresholds,
   ResolveResult,
   ReviseOptions,
   RevisePatch,
   Submission,
+  Trace,
+  TraceInput,
   Version,
   WriteOptions,
 } from '@data-agent-ontology/ontology-core';
@@ -20,6 +28,13 @@ export interface Requests {
   revise: { patch: RevisePatch; options?: ReviseOptions };
   revert: { versionId: string; options?: MoveOptions };
   rollback: { versionId: string; options?: Pick<MoveOptions, 'expectedActive'> };
+  recordTrace: { trace: TraceInput };
+  listTraces: Record<string, never>;
+  note: { input: NoteInput };
+  listProposals: { status?: ProposalStatus };
+  proposeRelations: { thresholds?: ProposerThresholds };
+  acceptProposal: { proposalId: string; curator: Actor; edits?: ProposalEdits };
+  rejectProposal: { proposalId: string; curator: Actor };
 }
 
 export interface Responses {
@@ -31,6 +46,13 @@ export interface Responses {
   revise: Version;
   revert: Version;
   rollback: Version;
+  recordTrace: Trace;
+  listTraces: Trace[];
+  note: Proposal;
+  listProposals: Proposal[];
+  proposeRelations: Proposal[];
+  acceptProposal: Proposal;
+  rejectProposal: Proposal;
 }
 
 export type Method = keyof Requests;
@@ -44,6 +66,13 @@ export const METHODS = [
   'revise',
   'revert',
   'rollback',
+  'recordTrace',
+  'listTraces',
+  'note',
+  'listProposals',
+  'proposeRelations',
+  'acceptProposal',
+  'rejectProposal',
 ] as const satisfies readonly Method[];
 
 export type ErrorCode =
@@ -54,6 +83,8 @@ export type ErrorCode =
   | 'merge_conflict'
   | 'active_version_changed'
   | 'revert_conflict'
+  | 'unknown_proposal'
+  | 'proposal_closed'
   | 'revision_rejected'
   | 'rejected'
   | 'internal';

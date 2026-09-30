@@ -17,7 +17,7 @@ export interface ProposerThresholds {
 
 export const DEFAULT_THRESHOLDS: ProposerThresholds = { minSupport: 3, minSessions: 2 };
 
-export const RELATION_PROPOSER: Actor = { id: 'relation-proposer' };
+const RELATION_PROPOSER: Actor = { id: 'relation-proposer' };
 
 interface Sighting {
   traceIds: string[];

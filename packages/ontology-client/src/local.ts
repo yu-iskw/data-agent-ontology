@@ -1,14 +1,21 @@
-import { checkSqlAgainst } from './check-sql.js';
+import { checkSqlAgainst, shapeOfSql } from './check-sql.js';
 import { formatContext } from './format.js';
 
-import type { OntologyClient, OntologyContext, SqlCheck } from './client.js';
+import type { OntologyClient, OntologyContext, SqlCheck, SqlRun } from './client.js';
 import type {
+  Actor,
   MoveOptions,
+  NoteInput,
   Ontology,
   OntologySnapshot,
+  Proposal,
+  ProposalEdits,
+  ProposalStatus,
+  ProposerThresholds,
   ReviseOptions,
   RevisePatch,
   Submission,
+  Trace,
   Version,
   WriteOptions,
 } from '@data-agent-ontology/ontology-core';
@@ -74,7 +81,38 @@ export class LocalOntologyClient implements OntologyClient {
     return this.write(() => this.ontology.rollback(versionId, options));
   }
 
-  private write(action: () => Version): Promise<Version> {
+  recordSql(run: SqlRun): Promise<Trace> {
+    const snapshot = this.cachedSnapshot();
+    return this.write(() =>
+      this.ontology.recordTrace({
+        ...run,
+        versionId: snapshot.version.versionId,
+        ...shapeOfSql(run.sql, snapshot),
+      }),
+    );
+  }
+
+  note(input: NoteInput): Promise<Proposal> {
+    return this.write(() => this.ontology.note(input));
+  }
+
+  listProposals(status?: ProposalStatus): Promise<Proposal[]> {
+    return Promise.resolve(this.ontology.listProposals(status));
+  }
+
+  proposeRelations(thresholds?: ProposerThresholds): Promise<Proposal[]> {
+    return this.write(() => this.ontology.proposeRelations(thresholds));
+  }
+
+  acceptProposal(proposalId: string, curator: Actor, edits?: ProposalEdits): Promise<Proposal> {
+    return this.write(() => this.ontology.acceptProposal(proposalId, curator, edits));
+  }
+
+  rejectProposal(proposalId: string, curator: Actor): Promise<Proposal> {
+    return this.write(() => this.ontology.rejectProposal(proposalId, curator));
+  }
+
+  private write<T>(action: () => T): Promise<T> {
     try {
       return Promise.resolve(action());
     } catch (error) {

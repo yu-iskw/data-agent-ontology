@@ -48,10 +48,7 @@ const TABLE_REF = new RegExp(
 );
 const CTE_NAME = new RegExp(String.raw`(${IDENT})\s+as\s*\(`, 'gi');
 const QUALIFIED = new RegExp(String.raw`(${IDENT})\.(${IDENT})`, 'g');
-const JOIN_ON = new RegExp(
-  String.raw`\bon\s+\(?\s*(${IDENT})\.(${IDENT})\s*=\s*(${IDENT})\.(${IDENT})`,
-  'gi',
-);
+const EQUALITY = new RegExp(String.raw`(${IDENT})\.(${IDENT})\s*=\s*(${IDENT})\.(${IDENT})`, 'g');
 const MAX_SUGGESTION_DISTANCE = 3;
 const MAX_CONSTRAINT_NOTES = 8;
 
@@ -206,9 +203,19 @@ function samePair(relation: Relation, a: string, b: string): boolean {
   );
 }
 
-function checkJoins(sql: string, snapshot: OntologySnapshot, refs: TableRef[]): SqlIssue[] {
-  const issues: SqlIssue[] = [];
-  for (const match of sql.matchAll(JOIN_ON)) {
+interface Equality {
+  a: string;
+  b: string;
+  text: string;
+  left: TableRef;
+  right: TableRef;
+}
+
+/** Column equalities across two different tables, with the columns they name. Unknown columns are skipped. */
+function equalities(sql: string, snapshot: OntologySnapshot, refs: TableRef[]): Equality[] {
+  const found: Equality[] = [];
+  const known = new Set(snapshot.columns.map((column) => column.columnId));
+  for (const match of sql.matchAll(EQUALITY)) {
     const left = refFor(refs, unquote(match[1]));
     const right = refFor(refs, unquote(match[3]));
     if (!left || !right || left.table.tableId === right.table.tableId) {
@@ -216,6 +223,22 @@ function checkJoins(sql: string, snapshot: OntologySnapshot, refs: TableRef[]): 
     }
     const a = `${left.table.tableId}.${unquote(match[2])}`;
     const b = `${right.table.tableId}.${unquote(match[4])}`;
+    if (known.has(a) && known.has(b)) {
+      found.push({
+        a,
+        b,
+        left,
+        right,
+        text: `${unquote(match[1])}.${unquote(match[2])} = ${unquote(match[3])}.${unquote(match[4])}`,
+      });
+    }
+  }
+  return found;
+}
+
+function checkJoins(snapshot: OntologySnapshot, joins: Equality[]): SqlIssue[] {
+  const issues: SqlIssue[] = [];
+  for (const { a, b, left, right, text } of joins) {
     const between = snapshot.relations.filter((relation) => {
       const tables = [tableOfColumn(relation.fromColumnId), tableOfColumn(relation.toColumnId)];
       return tables.includes(left.table.tableId) && tables.includes(right.table.tableId);
@@ -225,7 +248,7 @@ function checkJoins(sql: string, snapshot: OntologySnapshot, refs: TableRef[]): 
       issues.push({
         code: 'join_mismatch',
         severity: 'warning',
-        message: `Join ${unquote(match[1])}.${unquote(match[2])} = ${unquote(match[3])}.${unquote(match[4])} differs from the known join: ${known}`,
+        message: `Join ${text} differs from the known join: ${known}`,
       });
     }
   }
@@ -250,6 +273,23 @@ function constraintNotes(snapshot: OntologySnapshot, refs: TableRef[]): SqlIssue
     }));
 }
 
+export interface SqlShape {
+  /** Ids of the ontology tables the statement reads. */
+  tableIds: string[];
+  /** Column pairs it equates across two tables. */
+  joins: [string, string][];
+}
+
+/** The tables and joins a statement uses, as far as the ontology recognizes them. */
+export function shapeOfSql(sql: string, snapshot: OntologySnapshot): SqlShape {
+  const cleaned = stripLiterals(sql);
+  const { refs } = resolveTables(cleaned, snapshot);
+  return {
+    tableIds: [...new Set(refs.map((ref) => ref.table.tableId))],
+    joins: equalities(cleaned, snapshot, refs).map(({ a, b }) => [a, b]),
+  };
+}
+
 /**
  * Advisory check of one statement against the visible ontology. It reads table and column
  * references with patterns, not a full SQL parser, so it can miss issues; it never rejects
@@ -261,7 +301,7 @@ export function checkSqlAgainst(sql: string, snapshot: OntologySnapshot): SqlIss
   return [
     ...issues,
     ...checkColumns(cleaned, snapshot, refs),
-    ...checkJoins(cleaned, snapshot, refs),
+    ...checkJoins(snapshot, equalities(cleaned, snapshot, refs)),
     ...constraintNotes(snapshot, refs),
   ];
 }

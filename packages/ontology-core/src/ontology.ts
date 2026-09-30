@@ -1,6 +1,6 @@
 import { isVisible } from './model.js';
-import { browseRecords, resolveRecords, withoutRevisionFlag } from './read.js';
 import { DEFAULT_THRESHOLDS, editedPatch, proposeNote, proposeRelations } from './proposals.js';
+import { browseRecords, resolveRecords, withoutRevisionFlag } from './read.js';
 import { applyRevert, RevertRootError } from './revert.js';
 import { applyRevision } from './revise.js';
 import { OntologyStore, UnknownVersionError } from './store.js';
@@ -30,14 +30,17 @@ import type { NoteInput, ProposalEdits, ProposerThresholds } from './proposals.j
 import type { RecordReader } from './read.js';
 
 export class UnknownProposalError extends Error {
-  constructor(proposalId: string) {
+  constructor(readonly proposalId: string) {
     super(`Unknown proposal: ${proposalId}`);
     this.name = 'UnknownProposalError';
   }
 }
 
 export class ProposalClosedError extends Error {
-  constructor(proposalId: string, status: ProposalStatus) {
+  constructor(
+    readonly proposalId: string,
+    readonly status: ProposalStatus,
+  ) {
     super(`Proposal ${proposalId} is already ${status}`);
     this.name = 'ProposalClosedError';
   }
@@ -201,34 +204,6 @@ export class Ontology {
     return this.decide(this.openProposal(proposalId), 'rejected', curator);
   }
 
-  private openProposal(proposalId: string): Proposal {
-    const proposal = this.listProposals().find((candidate) => candidate.proposalId === proposalId);
-    if (!proposal) {
-      throw new UnknownProposalError(proposalId);
-    }
-    if (proposal.status !== 'open') {
-      throw new ProposalClosedError(proposalId, proposal.status);
-    }
-    return proposal;
-  }
-
-  private decide(
-    proposal: Proposal,
-    status: 'accepted' | 'rejected',
-    curator: Actor,
-    resolvedVersionId?: string,
-  ): Proposal {
-    const decided: Proposal = {
-      ...proposal,
-      status,
-      decidedBy: curator,
-      ...(resolvedVersionId && { resolvedVersionId }),
-      updatedAt: this.store.now().toISOString(),
-    };
-    this.store.putWorkItem('proposal', decided.proposalId, decided);
-    return decided;
-  }
-
   /** Visible records of the active version, in the artifact shape the evaluator reads. */
   snapshot(): OntologySnapshot {
     const version = this.requireActive();
@@ -263,6 +238,34 @@ export class Ontology {
       constraints,
       evidence,
     };
+  }
+
+  private openProposal(proposalId: string): Proposal {
+    const proposal = this.listProposals().find((candidate) => candidate.proposalId === proposalId);
+    if (!proposal) {
+      throw new UnknownProposalError(proposalId);
+    }
+    if (proposal.status !== 'open') {
+      throw new ProposalClosedError(proposalId, proposal.status);
+    }
+    return proposal;
+  }
+
+  private decide(
+    proposal: Proposal,
+    status: 'accepted' | 'rejected',
+    curator: Actor,
+    resolvedVersionId?: string,
+  ): Proposal {
+    const decided: Proposal = {
+      ...proposal,
+      status,
+      decidedBy: curator,
+      ...(resolvedVersionId && { resolvedVersionId }),
+      updatedAt: this.store.now().toISOString(),
+    };
+    this.store.putWorkItem('proposal', decided.proposalId, decided);
+    return decided;
   }
 
   private requireActive(): Version {

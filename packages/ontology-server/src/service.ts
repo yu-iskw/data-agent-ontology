@@ -16,6 +16,28 @@ function field<T extends object, K extends keyof T>(body: T, key: K): T[K] {
   return body[key];
 }
 
+type Handler<M extends Method> = (service: OntologyService, request: Requests[M]) => Responses[M];
+
+/** One handler per method. The mapped type makes a new method a compile error until handled. */
+const HANDLERS: { [M in Method]: Handler<M> } = {
+  browse: (s, r) => s.ontology.browse(field(r, 'question')),
+  resolve: (s, r) => s.ontology.resolve(field(r, 'termIds')),
+  snapshot: (s) => s.snapshot(),
+  listVersions: (s) => s.ontology.store.listVersions(),
+  submitScope: (s, r) => s.ontology.submitScope(field(r, 'submission'), r.options),
+  revise: (s, r) => s.ontology.revise(field(r, 'patch'), r.options),
+  revert: (s, r) => s.ontology.revert(field(r, 'versionId'), r.options),
+  rollback: (s, r) => s.ontology.rollback(field(r, 'versionId'), r.options),
+  recordTrace: (s, r) => s.ontology.recordTrace(field(r, 'trace')),
+  listTraces: (s) => s.ontology.listTraces(),
+  note: (s, r) => s.ontology.note(field(r, 'input')),
+  listProposals: (s, r) => s.ontology.listProposals(r.status),
+  proposeRelations: (s, r) => s.ontology.proposeRelations(r.thresholds),
+  acceptProposal: (s, r) =>
+    s.ontology.acceptProposal(field(r, 'proposalId'), field(r, 'curator'), r.edits),
+  rejectProposal: (s, r) => s.ontology.rejectProposal(field(r, 'proposalId'), field(r, 'curator')),
+};
+
 /**
  * The core behind one process. Calls run to completion on the event loop, so writes are
  * serialized, and the snapshot is cached per active version because versions are immutable.
@@ -23,7 +45,7 @@ function field<T extends object, K extends keyof T>(body: T, key: K): T[K] {
 export class OntologyService {
   private cached: OntologySnapshot | undefined;
 
-  constructor(private readonly ontology: Ontology) {}
+  constructor(readonly ontology: Ontology) {}
 
   call(name: string, body: unknown): Responses[Method] {
     if (!isMethod(name)) {
@@ -32,43 +54,11 @@ export class OntologyService {
     if (body === null || typeof body !== 'object' || Array.isArray(body)) {
       throw new ServiceError(400, 'bad_request', 'The request body must be a JSON object');
     }
-    return this.dispatch(name, body as Requests[Method]);
+    const handler = HANDLERS[name] as Handler<Method>;
+    return handler(this, body);
   }
 
-  private dispatch(name: Method, body: Requests[Method]): Responses[Method] {
-    switch (name) {
-      case 'browse':
-        return this.ontology.browse(field(body as Requests['browse'], 'question'));
-      case 'resolve':
-        return this.ontology.resolve(field(body as Requests['resolve'], 'termIds'));
-      case 'snapshot':
-        return this.snapshot();
-      case 'listVersions':
-        return this.ontology.store.listVersions();
-      case 'submitScope': {
-        const request = body as Requests['submitScope'];
-        return this.ontology.submitScope(field(request, 'submission'), request.options);
-      }
-      case 'revise': {
-        const request = body as Requests['revise'];
-        return this.ontology.revise(field(request, 'patch'), request.options);
-      }
-      case 'revert': {
-        const request = body as Requests['revert'];
-        return this.ontology.revert(field(request, 'versionId'), request.options);
-      }
-      case 'rollback': {
-        const request = body as Requests['rollback'];
-        return this.ontology.rollback(field(request, 'versionId'), request.options);
-      }
-      default: {
-        const unreachable: never = name;
-        throw new Error(`Unhandled method ${String(unreachable)}`);
-      }
-    }
-  }
-
-  private snapshot(): OntologySnapshot {
+  snapshot(): OntologySnapshot {
     const active = this.ontology.store.activeVersion;
     if (this.cached && active?.versionId === this.cached.version.versionId) {
       return this.cached;

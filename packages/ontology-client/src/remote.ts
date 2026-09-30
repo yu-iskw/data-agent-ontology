@@ -1,24 +1,33 @@
 import {
   ActiveVersionChangedError,
   MergeConflictError,
+  ProposalClosedError,
   RevertConflictError,
   RevisionError,
+  UnknownProposalError,
   UnknownVersionError,
 } from '@data-agent-ontology/ontology-core';
 
-import { checkSqlAgainst } from './check-sql.js';
+import { checkSqlAgainst, shapeOfSql } from './check-sql.js';
 import { formatContext } from './format.js';
 
-import type { OntologyClient, OntologyContext, SqlCheck } from './client.js';
-import type { Envelope, ErrorBody, Method, Requests, Responses } from './protocol.js';
+import type { OntologyClient, OntologyContext, SqlCheck, SqlRun } from './client.js';
+import type { Envelope, ErrorBody, ErrorCode, Method, Requests, Responses } from './protocol.js';
 import type {
+  Actor,
   MergeConflict,
-  RevertConflict,
   MoveOptions,
+  NoteInput,
   OntologySnapshot,
+  Proposal,
+  ProposalEdits,
+  ProposalStatus,
+  ProposerThresholds,
+  RevertConflict,
   ReviseOptions,
   RevisePatch,
   Submission,
+  Trace,
   Version,
   WriteOptions,
 } from '@data-agent-ontology/ontology-core';
@@ -36,45 +45,43 @@ export class RemoteError extends Error {
   }
 }
 
-interface ConflictDetails {
-  baseVersionId: string;
-  headVersionId: string | null;
-  conflicts: MergeConflict[];
-}
+type Details = Record<string, unknown> | undefined;
+
+type Reviver = (status: number, body: ErrorBody, details: Details) => Error;
+
+const asRemote: Reviver = (status, body) => new RemoteError(status, body);
 
 /** Rebuilds the core error a local client would have thrown, so callers handle both alike. */
+const REVIVERS: Record<ErrorCode, Reviver> = {
+  merge_conflict: (_status, _body, details) =>
+    new MergeConflictError(
+      details?.baseVersionId as string,
+      details?.headVersionId as string | null,
+      details?.conflicts as MergeConflict[],
+    ),
+  active_version_changed: (_status, _body, details) =>
+    new ActiveVersionChangedError(
+      details?.expected as string | null,
+      details?.actual as string | null,
+    ),
+  revert_conflict: (_status, _body, details) =>
+    new RevertConflictError(details?.versionId as string, details?.conflicts as RevertConflict[]),
+  revision_rejected: (_status, _body, details) => new RevisionError(details?.problems as string[]),
+  proposal_closed: (_status, _body, details) =>
+    new ProposalClosedError(details?.proposalId as string, details?.status as Proposal['status']),
+  unknown_proposal: (_status, _body, details) =>
+    new UnknownProposalError(details?.proposalId as string),
+  unknown_version: (_status, body) =>
+    new UnknownVersionError(body.message.replace('Unknown ontology version: ', '')),
+  unauthorized: asRemote,
+  bad_request: asRemote,
+  unknown_method: asRemote,
+  rejected: asRemote,
+  internal: asRemote,
+};
+
 function reviveError(status: number, body: ErrorBody): Error {
-  const details = body.details as Record<string, unknown> | undefined;
-  switch (body.code) {
-    case 'merge_conflict': {
-      const { baseVersionId, headVersionId, conflicts } = details as unknown as ConflictDetails;
-      return new MergeConflictError(baseVersionId, headVersionId, conflicts);
-    }
-    case 'active_version_changed':
-      return new ActiveVersionChangedError(
-        details?.expected as string | null,
-        details?.actual as string | null,
-      );
-    case 'revert_conflict':
-      return new RevertConflictError(
-        details?.versionId as string,
-        details?.conflicts as RevertConflict[],
-      );
-    case 'revision_rejected':
-      return new RevisionError(details?.problems as string[]);
-    case 'unknown_version':
-      return new UnknownVersionError(body.message.replace('Unknown ontology version: ', ''));
-    case 'unauthorized':
-    case 'bad_request':
-    case 'unknown_method':
-    case 'rejected':
-    case 'internal':
-      return new RemoteError(status, body);
-    default: {
-      const unreachable: never = body.code;
-      return new RemoteError(status, { code: 'internal', message: String(unreachable) });
-    }
-  }
+  return REVIVERS[body.code](status, body, body.details as Details);
 }
 
 export interface RemoteOptions {
@@ -140,6 +147,33 @@ export class RemoteOntologyClient implements OntologyClient {
     return this.write('rollback', { versionId, options });
   }
 
+  async recordSql(run: SqlRun): Promise<Trace> {
+    const snapshot = this.cached ?? (await this.snapshot());
+    return this.call('recordTrace', {
+      trace: { ...run, versionId: snapshot.version.versionId, ...shapeOfSql(run.sql, snapshot) },
+    });
+  }
+
+  note(input: NoteInput): Promise<Proposal> {
+    return this.call('note', { input });
+  }
+
+  listProposals(status?: ProposalStatus): Promise<Proposal[]> {
+    return this.call('listProposals', { status });
+  }
+
+  proposeRelations(thresholds?: ProposerThresholds): Promise<Proposal[]> {
+    return this.call('proposeRelations', { thresholds });
+  }
+
+  acceptProposal(proposalId: string, curator: Actor, edits?: ProposalEdits): Promise<Proposal> {
+    return this.write('acceptProposal', { proposalId, curator, edits });
+  }
+
+  rejectProposal(proposalId: string, curator: Actor): Promise<Proposal> {
+    return this.call('rejectProposal', { proposalId, curator });
+  }
+
   /** Drops the cached snapshot when a response shows the active version moved. */
   private observed<T extends { versionId: string }>(response: T): T {
     if (this.cached && this.cached.version.versionId !== response.versionId) {
@@ -149,10 +183,9 @@ export class RemoteOntologyClient implements OntologyClient {
   }
 
   /** A write moves the active version, so the cached snapshot is stale afterwards. */
-  private async write<M extends 'submitScope' | 'revise' | 'revert' | 'rollback'>(
-    method: M,
-    body: Requests[M],
-  ): Promise<Responses[M]> {
+  private async write<
+    M extends 'submitScope' | 'revise' | 'revert' | 'rollback' | 'acceptProposal',
+  >(method: M, body: Requests[M]): Promise<Responses[M]> {
     this.cached = undefined;
     return this.call(method, body);
   }
