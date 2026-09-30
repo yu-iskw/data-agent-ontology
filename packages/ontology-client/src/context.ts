@@ -6,7 +6,7 @@ import type { OntologyContext } from './client.js';
 import type { BrowseResult, ResolveResult } from '@data-agent-ontology/ontology-core';
 
 /** The browse and resolve calls `contextFor` needs. Local and remote clients both qualify. */
-export interface ContextSource {
+interface ContextSource {
   browse(question: string): Promise<BrowseResult>;
   resolve(termIds: string[]): Promise<ResolveResult>;
 }
