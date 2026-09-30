@@ -5,12 +5,11 @@ import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT } from './http.js';
 
 describe('parseArgs', () => {
   it('reads stdio from flags and ignores the need for a token', () => {
-    expect(parseArgs(['--transport', 'stdio', '--file', 'ontology.lbdb'], {})).toEqual({
+    expect(
+      parseArgs(['--transport', 'stdio', '--file', 'ontology.lbdb', '--port', '9'], {}),
+    ).toEqual({
       transport: 'stdio',
       file: 'ontology.lbdb',
-      token: undefined,
-      port: DEFAULT_HTTP_PORT,
-      host: DEFAULT_HTTP_HOST,
     });
   });
 
@@ -24,7 +23,7 @@ describe('parseArgs', () => {
       transport: 'http',
       file: 'warehouse.lbdb',
       token: 'secret',
-      port: 8788,
+      port: DEFAULT_HTTP_PORT,
       host: DEFAULT_HTTP_HOST,
     });
   });

@@ -8,13 +8,13 @@ import { createOntologyMcpServer } from './server.js';
 import type { OntologyClient } from '@data-agent-ontology/ontology-client';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 
-export const MCP_PATH = '/mcp';
+const MCP_PATH = '/mcp';
 export const DEFAULT_HTTP_PORT = 8788;
 export const DEFAULT_HTTP_HOST = '127.0.0.1';
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
-export interface HttpListenOptions {
+interface HttpListenOptions {
   client: OntologyClient;
   /** Non-empty bearer secret. Missing or wrong tokens are rejected. */
   token: string;
@@ -22,7 +22,7 @@ export interface HttpListenOptions {
   host?: string;
 }
 
-export interface RunningMcpHttp {
+interface RunningMcpHttp {
   url: string;
   close(): Promise<void>;
 }

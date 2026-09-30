@@ -40,23 +40,21 @@ function databasePath(): string {
   return join(mkdtempSync(join(tmpdir(), 'ontology-mcp-')), 'ontology.lbdb');
 }
 
-function textOf(result: unknown): string {
-  if (typeof result !== 'object' || result === null || !('content' in result)) {
-    throw new Error('Expected a text tool result');
-  }
-  const { content } = result;
-  if (!Array.isArray(content)) {
-    throw new Error('Expected a text tool result');
-  }
-  const block: unknown = content[0];
-  if (
-    typeof block !== 'object' ||
-    block === null ||
-    !('type' in block) ||
-    !('text' in block) ||
-    block.type !== 'text' ||
-    typeof block.text !== 'string'
-  ) {
+function isTextBlock(block: unknown): block is { type: 'text'; text: string } {
+  return (
+    typeof block === 'object' &&
+    block !== null &&
+    'type' in block &&
+    block.type === 'text' &&
+    'text' in block &&
+    typeof block.text === 'string'
+  );
+}
+
+function textOf(result: Awaited<ReturnType<Client['callTool']>>): string {
+  const content = 'content' in result ? result.content : undefined;
+  const block: unknown = Array.isArray(content) ? content[0] : undefined;
+  if (!isTextBlock(block)) {
     throw new Error('Expected a text tool result');
   }
   return block.text;

@@ -1,7 +1,7 @@
 import { LocalOntologyClient } from '@data-agent-ontology/ontology-client';
 import { Ontology, OntologyStore } from '@data-agent-ontology/ontology-core';
 
-export interface OpenedOntology {
+interface OpenedOntology {
   client: LocalOntologyClient;
   close(): void;
 }

@@ -1,42 +1,17 @@
+import { parseArgs as parseNodeArgs } from 'node:util';
+
 import { DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, startHttpServer } from './http.js';
 import { openLocalOntology } from './open.js';
 import { startStdioServer } from './stdio.js';
 
-export type TransportName = 'stdio' | 'http';
+type TransportName = 'stdio' | 'http';
 
-interface CommonConfig {
-  file: string;
-  port: number;
-  host: string;
-}
-
-export type CliConfig = CommonConfig &
-  ({ transport: 'stdio'; token?: string } | { transport: 'http'; token: string });
+export type CliConfig =
+  | { transport: 'stdio'; file: string }
+  | { transport: 'http'; file: string; token: string; port: number; host: string };
 
 const USAGE =
   'Usage: ontology-mcp --transport stdio|http (--file <path.lbdb> | ONTOLOGY_FILE) [--token <secret> | ONTOLOGY_TOKEN] [--port <n>] [--host <host>]';
-
-interface Draft {
-  transport?: TransportName;
-  file?: string;
-  token?: string;
-  port: number;
-  host: string;
-}
-
-function takeValue(argv: readonly string[], index: number, flag: string): string {
-  const next = index + 1;
-  if (next >= argv.length) {
-    throw new Error(`${flag} requires a value`);
-  }
-  // CLI cursor, not an object key.
-  // eslint-disable-next-line security/detect-object-injection
-  const value = argv[next];
-  if (value.length === 0 || value.startsWith('--')) {
-    throw new Error(`${flag} requires a value`);
-  }
-  return value;
-}
 
 function parseTransport(value: string): TransportName {
   switch (value) {
@@ -69,81 +44,79 @@ function requireFile(file: string | undefined): string {
   return file;
 }
 
-function finish(draft: Draft): CliConfig {
-  if (draft.transport === undefined) {
-    throw new Error(`--transport is required. ${USAGE}`);
+function hostFrom(flag: string | undefined, env: NodeJS.ProcessEnv): string {
+  if (flag !== undefined && flag.length > 0) {
+    return flag;
   }
-  const file = requireFile(draft.file);
-  const common = { file, port: draft.port, host: draft.host };
-  switch (draft.transport) {
-    case 'stdio':
-      return { ...common, transport: 'stdio', token: draft.token };
-    case 'http':
-      if (draft.token === undefined || draft.token.length === 0) {
-        throw new Error('HTTP transport requires --token or ONTOLOGY_TOKEN');
-      }
-      return { ...common, transport: 'http', token: draft.token };
-    default: {
-      const unexpected: never = draft.transport;
-      throw new Error(`Unexpected transport ${String(unexpected)}`);
-    }
+  if (env.HOST !== undefined && env.HOST.length > 0) {
+    return env.HOST;
   }
-}
-
-function applyFlag(draft: Draft, argv: readonly string[], index: number): number {
-  // CLI cursor, not an object key.
-  // eslint-disable-next-line security/detect-object-injection
-  const flag = argv[index] ?? '';
-  switch (flag) {
-    case '--transport':
-      draft.transport = parseTransport(takeValue(argv, index, flag));
-      return index + 2;
-    case '--file':
-      draft.file = takeValue(argv, index, flag);
-      return index + 2;
-    case '--token':
-      draft.token = takeValue(argv, index, flag);
-      return index + 2;
-    case '--port':
-      draft.port = parsePort(takeValue(argv, index, flag));
-      return index + 2;
-    case '--host':
-      draft.host = takeValue(argv, index, flag);
-      return index + 2;
-    default:
-      throw new Error(`Unknown argument ${flag}. ${USAGE}`);
-  }
+  return DEFAULT_HTTP_HOST;
 }
 
 export function parseArgs(
   argv: readonly string[],
   env: NodeJS.ProcessEnv = process.env,
 ): CliConfig {
-  const draft: Draft = {
-    file: env.ONTOLOGY_FILE,
-    token: env.ONTOLOGY_TOKEN,
-    port: DEFAULT_HTTP_PORT,
-    host: env.HOST === undefined || env.HOST.length === 0 ? DEFAULT_HTTP_HOST : env.HOST,
-  };
-  for (let index = 0; index < argv.length;) {
-    index = applyFlag(draft, argv, index);
+  const { values } = parseNodeArgs({
+    args: [...argv],
+    options: {
+      transport: { type: 'string' },
+      file: { type: 'string' },
+      token: { type: 'string' },
+      port: { type: 'string' },
+      host: { type: 'string' },
+    },
+  });
+  if (values.transport === undefined) {
+    throw new Error(`--transport is required. ${USAGE}`);
   }
-  return finish(draft);
+  const transport = parseTransport(values.transport);
+  const file = requireFile(values.file ?? env.ONTOLOGY_FILE);
+  switch (transport) {
+    case 'stdio':
+      return { transport, file };
+    case 'http': {
+      const token = values.token ?? env.ONTOLOGY_TOKEN;
+      if (token === undefined || token.length === 0) {
+        throw new Error('HTTP transport requires --token or ONTOLOGY_TOKEN');
+      }
+      const port = values.port === undefined ? DEFAULT_HTTP_PORT : parsePort(values.port);
+      return { transport, file, token, port, host: hostFrom(values.host, env) };
+    }
+    default: {
+      const unexpected: never = transport;
+      throw new Error(`Unexpected transport ${String(unexpected)}`);
+    }
+  }
 }
 
 interface Running {
   close(): Promise<void>;
 }
 
-function untilSignal(running: Running, closeStore: () => void): void {
+function hold(running: Running, closeStore: () => void): () => void {
+  let stopping = false;
+  const finish = (): void => {
+    closeStore();
+    process.exit(0);
+  };
   const stop = (): void => {
-    void running.close().finally(() => {
-      closeStore();
-      process.exit(0);
-    });
+    if (stopping) {
+      return;
+    }
+    stopping = true;
+    void running.close().finally(finish);
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
+  return () => {
+    if (stopping) {
+      return;
+    }
+    stopping = true;
+    finish();
+  };
 }
 
 /** Opens the Ladybug file and serves it until the process is signaled to stop. */
@@ -153,19 +126,20 @@ export async function run(
 ): Promise<void> {
   const config = parseArgs(argv, env);
   const opened = openLocalOntology(config.file);
+  const closeStore = (): void => {
+    opened.close();
+  };
   try {
     switch (config.transport) {
       case 'stdio': {
+        let disconnect = (): void => {};
         const running = await startStdioServer(opened.client, {
           onClose: () => {
-            opened.close();
-            process.exit(0);
+            disconnect();
           },
         });
+        disconnect = hold(running, closeStore);
         console.error(`ontology mcp stdio, database ${config.file}`);
-        untilSignal(running, () => {
-          opened.close();
-        });
         return;
       }
       case 'http': {
@@ -175,10 +149,8 @@ export async function run(
           port: config.port,
           host: config.host,
         });
+        hold(running, closeStore);
         console.log(`ontology mcp on ${running.url}, database ${config.file}`);
-        untilSignal(running, () => {
-          opened.close();
-        });
         return;
       }
       default: {
@@ -187,7 +159,7 @@ export async function run(
       }
     }
   } catch (error) {
-    opened.close();
+    closeStore();
     throw error;
   }
 }

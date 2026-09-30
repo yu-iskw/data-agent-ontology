@@ -10,14 +10,14 @@ interface StdioStreams {
   stdout: Writable;
 }
 
-export interface StdioOptions {
+interface StdioOptions {
   /** Replaces process stdin and stdout. Tests use this for an in-process pair. */
   streams?: StdioStreams;
   /** Runs when the client disconnects. Set before connect so the SDK chains it. */
   onClose?: () => void;
 }
 
-export interface RunningStdio {
+interface RunningStdio {
   close(): Promise<void>;
 }
 
