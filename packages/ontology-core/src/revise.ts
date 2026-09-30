@@ -5,6 +5,7 @@ import { refreshDrift } from './submit.js';
 import type {
   ConstraintInput,
   DomainInput,
+  Evidence,
   MappingInput,
   MembershipInput,
   RelationInput,
@@ -54,8 +55,14 @@ function conflicts(
   return false;
 }
 
+interface Citation {
+  summary: string;
+  /** Constraints and relations can be cited from traces; other records stay `revise`. */
+  trajectory: boolean;
+}
+
 class RevisionContext {
-  readonly evidence = new Map<string, string>();
+  readonly evidence = new Map<string, Citation>();
   readonly problems: string[] = [];
 
   constructor(
@@ -63,8 +70,8 @@ class RevisionContext {
     private readonly summary: string,
   ) {}
 
-  cite(targetId: string, summary: string | undefined): void {
-    this.evidence.set(targetId, summary ?? this.summary);
+  cite(targetId: string, summary: string | undefined, trajectory: boolean): void {
+    this.evidence.set(targetId, { summary: summary ?? this.summary, trajectory });
   }
 
   problem(message: string): void {
@@ -80,7 +87,7 @@ function putDomain(ctx: RevisionContext, input: DomainInput): void {
     active: true,
     drifted: false,
   });
-  ctx.cite(input.domainId, undefined);
+  ctx.cite(input.domainId, undefined, false);
 }
 
 function checkDomainParents(ctx: RevisionContext, inputs: DomainInput[]): void {
@@ -117,7 +124,7 @@ function putMembership(ctx: RevisionContext, input: MembershipInput): void {
     domainIds: [...new Set(input.domainIds)].sort((a, b) => a.localeCompare(b)),
     membershipRevised: true,
   });
-  ctx.cite(table.tableId, undefined);
+  ctx.cite(table.tableId, undefined, false);
 }
 
 function putTerm(ctx: RevisionContext, input: TermInput): void {
@@ -133,7 +140,7 @@ function putTerm(ctx: RevisionContext, input: TermInput): void {
     active: true,
     drifted: false,
   });
-  ctx.cite(input.termId, input.evidence);
+  ctx.cite(input.termId, input.evidence, false);
 }
 
 function putMapping(ctx: RevisionContext, input: MappingInput): void {
@@ -159,7 +166,7 @@ function putMapping(ctx: RevisionContext, input: MappingInput): void {
     return;
   }
   ctx.draft.put('mappings', mappingId, mapping);
-  ctx.cite(mappingId, input.evidence);
+  ctx.cite(mappingId, input.evidence, false);
 }
 
 function putRelation(ctx: RevisionContext, input: RelationInput): void {
@@ -189,7 +196,7 @@ function putRelation(ctx: RevisionContext, input: RelationInput): void {
     return;
   }
   ctx.draft.put('relations', relationId, relation);
-  ctx.cite(relationId, input.evidence);
+  ctx.cite(relationId, input.evidence, true);
 }
 
 function putConstraint(ctx: RevisionContext, input: ConstraintInput): void {
@@ -217,7 +224,7 @@ function putConstraint(ctx: RevisionContext, input: ConstraintInput): void {
     return;
   }
   ctx.draft.put('constraints', constraintId, constraint);
-  ctx.cite(constraintId, input.evidence);
+  ctx.cite(constraintId, input.evidence, true);
 }
 
 /** Mapping integrity (RFC section 6): the mapped table must belong to the term's domain. */
@@ -240,6 +247,20 @@ function each<T>(items: T[] | undefined, apply: (item: T) => void): void {
   }
 }
 
+function evidenceFor(targetId: string, cited: Citation, traceIds: string[] | undefined): Evidence {
+  const evidenceId = `evidence:${targetId}`;
+  if (cited.trajectory && traceIds !== undefined) {
+    return {
+      evidenceId,
+      targetId,
+      source: 'trajectory',
+      summary: cited.summary,
+      traceIds: [...traceIds],
+    };
+  }
+  return { evidenceId, targetId, source: 'revise', summary: cited.summary };
+}
+
 /** Applies an authoritative semantic revision (RFC section 11). All problems are reported together. */
 export function applyRevision(draft: Draft, patch: RevisePatch): void {
   const ctx = new RevisionContext(draft, patch.summary);
@@ -254,9 +275,9 @@ export function applyRevision(draft: Draft, patch: RevisePatch): void {
   if (ctx.problems.length > 0) {
     throw new RevisionError(ctx.problems);
   }
-  for (const [targetId, summary] of ctx.evidence) {
-    const evidenceId = `evidence:${targetId}`;
-    draft.put('evidence', evidenceId, { evidenceId, targetId, source: 'revise', summary });
+  for (const [targetId, cited] of ctx.evidence) {
+    const evidence = evidenceFor(targetId, cited, patch.traceIds);
+    draft.put('evidence', evidence.evidenceId, evidence);
   }
   refreshDrift(draft);
 }

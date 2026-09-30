@@ -78,6 +78,8 @@ export interface Evidence {
   targetId: string;
   source: EvidenceSource;
   summary: string;
+  /** Set when `source` is `trajectory`: the traces the citation came from. */
+  traceIds?: string[];
 }
 
 export interface OntologyRecords {
@@ -217,6 +219,11 @@ export interface ConstraintInput {
 export interface RevisePatch {
   /** Default evidence summary for records in this patch that carry no evidence of their own. */
   summary: string;
+  /**
+   * When present, including `[]`, constraint and relation evidence is `trajectory` and copies
+   * these ids. Omitted on a direct `revise`, which stays `source: 'revise'`.
+   */
+  traceIds?: string[];
   domains?: DomainInput[];
   memberships?: MembershipInput[];
   terms?: TermInput[];

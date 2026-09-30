@@ -6,9 +6,10 @@ import { describe, expect, it } from 'vitest';
 
 import { MergeConflictError } from './merge.js';
 import { Ontology, ProposalClosedError } from './ontology.js';
+import { RevisionError } from './revise.js';
 import { OntologyStore } from './store.js';
 
-import type { RevisePatch, Submission, TraceInput } from './model.js';
+import type { ProposalDraft, RevisePatch, Submission, TraceInput } from './model.js';
 
 const ORDERS = 'bigquery:proj.sales.orders';
 const CUSTOMERS = 'bigquery:proj.sales.customers';
@@ -53,11 +54,48 @@ const TERMS: RevisePatch = {
   ],
 };
 
+function relationDraft(baseVersionId: string): ProposalDraft {
+  return {
+    kind: 'relation',
+    key: `relation:${CUSTOMER_PK}|${ORDER_FK}`,
+    patch: {
+      summary: 'join',
+      relations: [
+        {
+          name: 'places',
+          fromTermId: 'customer',
+          toTermId: 'order',
+          fromColumnId: CUSTOMER_PK,
+          toColumnId: ORDER_FK,
+          join: 'proj.sales.customers.customer_id = proj.sales.orders.customer_id',
+        },
+      ],
+    },
+    baseVersionId,
+    evidence: { summary: 'join', traceIds: ['t1'] },
+    proposer: { id: 'agent' },
+    sessions: ['s1'],
+    users: ['agent'],
+  };
+}
+
 function seeded(): Ontology {
   const ontology = new Ontology();
   ontology.submitScope(STRUCTURE);
   ontology.revise(TERMS);
   return ontology;
+}
+
+function revisionProblems(action: () => unknown): string[] {
+  try {
+    action();
+  } catch (error) {
+    if (error instanceof RevisionError) {
+      return error.problems;
+    }
+    throw error;
+  }
+  throw new Error('Expected RevisionError');
 }
 
 function joinTrace(session: string, overrides: Partial<TraceInput> = {}): TraceInput {
@@ -183,7 +221,7 @@ describe('accepting and rejecting', () => {
     expect(ontology.snapshot().relations).toEqual([]);
   });
 
-  it('leaves the proposal open when a change since its base overlaps', () => {
+  it('leaves both contradictory constraint proposals open and writes nothing', () => {
     const ontology = seeded();
     const first = ontology.note({
       termId: 'order',
@@ -198,7 +236,44 @@ describe('accepting and rejecting', () => {
       sessionId: 's2',
       actor: { id: 'agent-b' },
     });
+    const versions = ontology.store.listVersions().length;
+    expect(revisionProblems(() => ontology.acceptProposal(first.proposalId, CURATOR))).toEqual(
+      expect.arrayContaining([expect.stringContaining('order')]),
+    );
+    expect(revisionProblems(() => ontology.acceptProposal(second.proposalId, CURATOR))).toEqual(
+      expect.arrayContaining([expect.stringContaining('order')]),
+    );
+    expect(ontology.listProposals('open').map((proposal) => proposal.proposalId)).toEqual([
+      first.proposalId,
+      second.proposalId,
+    ]);
+    expect(ontology.snapshot().constraints).toEqual([]);
+    expect(ontology.store.listVersions()).toHaveLength(versions);
+  });
+
+  it('still rejects an overlapping constraint revise from a stale base', () => {
+    const ontology = seeded();
+    const base = ontology.store.activeVersion?.versionId ?? '';
+    const first = ontology.note({
+      termId: 'order',
+      statement: 'Exclude cancelled orders.',
+      sessionId: 's1',
+      actor: { id: 'agent-a' },
+    });
     ontology.acceptProposal(first.proposalId, CURATOR);
+    const second = ontology.propose({
+      kind: 'constraint',
+      key: 'constraint:order:include cancelled orders',
+      patch: {
+        summary: 'Include cancelled orders.',
+        constraints: [{ termId: 'order', text: 'Include cancelled orders.' }],
+      },
+      baseVersionId: base,
+      evidence: { summary: 'Include cancelled orders.', traceIds: [] },
+      proposer: { id: 'agent-b' },
+      sessions: ['s2'],
+      users: ['agent-b'],
+    });
     expect(() => ontology.acceptProposal(second.proposalId, CURATOR)).toThrow(MergeConflictError);
     expect(ontology.listProposals('open').map((proposal) => proposal.proposalId)).toEqual([
       second.proposalId,
@@ -206,6 +281,47 @@ describe('accepting and rejecting', () => {
     expect(ontology.snapshot().constraints.map((constraint) => constraint.text)).toEqual([
       'Exclude cancelled orders.',
     ]);
+  });
+
+  it('leaves the proposal open when the term is missing', () => {
+    const ontology = new Ontology();
+    ontology.submitScope(STRUCTURE);
+    const proposal = ontology.note({
+      termId: 'missing',
+      statement: 'Something.',
+      sessionId: 's1',
+      actor: { id: 'agent' },
+    });
+    const versions = ontology.store.listVersions().length;
+    expect(revisionProblems(() => ontology.acceptProposal(proposal.proposalId, CURATOR))).toEqual([
+      'Referenced term missing does not exist or is inactive',
+    ]);
+    expect(ontology.listProposals('open').map((item) => item.proposalId)).toEqual([
+      proposal.proposalId,
+    ]);
+    expect(ontology.snapshot().constraints).toEqual([]);
+    expect(ontology.store.listVersions()).toHaveLength(versions);
+  });
+
+  it('leaves the proposal open when a cited column is inactive', () => {
+    const ontology = seeded();
+    const proposal = ontology.propose(relationDraft(ontology.store.activeVersion?.versionId ?? ''));
+    ontology.submitScope({
+      ...STRUCTURE,
+      columns: STRUCTURE.columns.filter(
+        (column) => column.tablePath !== 'proj.sales.customers' || column.name !== 'customer_id',
+      ),
+    });
+    expect(ontology.store.get('columns', CUSTOMER_PK)?.active).toBe(false);
+    const versions = ontology.store.listVersions().length;
+    expect(revisionProblems(() => ontology.acceptProposal(proposal.proposalId, CURATOR))).toEqual(
+      expect.arrayContaining([`Referenced column ${CUSTOMER_PK} does not exist or is inactive`]),
+    );
+    expect(ontology.listProposals('open').map((item) => item.proposalId)).toEqual([
+      proposal.proposalId,
+    ]);
+    expect(ontology.snapshot().relations).toEqual([]);
+    expect(ontology.store.listVersions()).toHaveLength(versions);
   });
 });
 
@@ -242,6 +358,33 @@ describe('persistence', () => {
     expect(reopened.listTraces()).toHaveLength(1);
     expect(reopened.listProposals()).toMatchObject([{ proposalId: 'p1', status: 'open' }]);
     expect(reopened.store.listVersions()).toHaveLength(versions);
+    reopened.store.close();
+  });
+
+  it('keeps trajectory evidence, including its trace ids, across reopening the file', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'ontology-evidence-')), 'ontology.lbdb');
+    const store = new OntologyStore(() => new Date(), path);
+    const ontology = new Ontology(store);
+    ontology.submitScope(STRUCTURE);
+    ontology.revise(TERMS);
+    const proposal = ontology.note({
+      termId: 'order',
+      statement: 'Exclude tax.',
+      sessionId: 's1',
+      actor: { id: 'a' },
+      traceIds: ['t9'],
+    });
+    ontology.acceptProposal(proposal.proposalId, CURATOR);
+    store.close();
+
+    const reopened = new Ontology(new OntologyStore(() => new Date(), path));
+    expect(reopened.snapshot().evidence.filter((row) => row.source === 'trajectory')).toEqual([
+      expect.objectContaining({
+        targetId: 'order:exclude_tax',
+        source: 'trajectory',
+        traceIds: ['t9'],
+      }),
+    ]);
     reopened.store.close();
   });
 });
