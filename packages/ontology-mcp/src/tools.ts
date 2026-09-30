@@ -15,6 +15,27 @@ const actorSchema = z.object({
 
 const proposalStatusSchema = z.enum(['open', 'accepted', 'rejected']);
 
+/**
+ * Keeps an optional-field object visible to the MCP SDK after `.default({})`.
+ *
+ * The SDK parses `arguments` with the tool schema and passes `undefined` when
+ * the client omits the field. `.default({})` turns that into `{}`. The SDK
+ * publishes a schema only when `def.type` is `"object"` or `def.shape` is set.
+ * A default wrapper is type `"default"`, so the object shape is copied onto it
+ * and the optional `status` filter stays in the published schema.
+ */
+function keepPublishedShape<Shape extends z.ZodRawShape>(
+  schema: z.ZodDefault<z.ZodObject<Shape>>,
+  shape: z.ZodObject<Shape>['shape'],
+): z.ZodDefault<z.ZodObject<Shape>> {
+  Object.assign(schema.def, { shape });
+  return schema;
+}
+
+const listProposalsArguments = z.object({
+  status: proposalStatusSchema.optional().describe('Filter by status. Omit for every status.'),
+});
+
 function textResult(value: unknown): CallToolResult {
   return { content: [{ type: 'text', text: JSON.stringify(value) }] };
 }
@@ -95,11 +116,10 @@ export function registerOntologyTools(server: McpServer, client: OntologyClient)
     {
       description:
         'List proposals filed from notes and traces. Read-only. Accepting a proposal stays on the library or the ontology HTTP service.',
-      inputSchema: {
-        status: proposalStatusSchema
-          .optional()
-          .describe('Filter by status. Omit for every status.'),
-      },
+      inputSchema: keepPublishedShape(
+        listProposalsArguments.default({}),
+        listProposalsArguments.shape,
+      ),
     },
     async ({ status }) => textResult(await client.listProposals(status)),
   );

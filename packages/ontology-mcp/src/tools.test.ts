@@ -178,6 +178,30 @@ describe('ontology mcp tools', () => {
     }
   });
 
+  it('lists proposals when the call omits arguments', async () => {
+    const session = await connect(databasePath());
+    try {
+      const listed = await session.client.callTool({ name: 'list_proposals' });
+      expect(listed.isError).not.toBe(true);
+      expect(JSON.parse(textOf(listed))).toEqual([]);
+
+      const tools = await session.client.listTools();
+      const schema = tools.tools.find((tool) => tool.name === 'list_proposals')?.inputSchema;
+      expect(schema).toMatchObject({
+        type: 'object',
+        properties: {
+          status: {
+            description: 'Filter by status. Omit for every status.',
+            enum: ['open', 'accepted', 'rejected'],
+          },
+        },
+      });
+      expect(schema?.required ?? []).not.toContain('status');
+    } finally {
+      await session.close();
+    }
+  });
+
   it('does not submit a scope when check_sql has no active version', async () => {
     const session = await connect(databasePath());
     try {
