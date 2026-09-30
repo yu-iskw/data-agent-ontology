@@ -115,6 +115,21 @@ importers:
         specifier: 0.20.4
         version: 0.20.4
 
+  packages/ontology-mastra:
+    dependencies:
+      '@data-agent-ontology/ontology-client':
+        specifier: workspace:*
+        version: link:../ontology-client
+      '@data-agent-ontology/ontology-core':
+        specifier: workspace:*
+        version: link:../ontology-core
+      '@mastra/core':
+        specifier: ^1.71.0
+        version: 1.71.0(zod@4.6.5)
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+
   packages/ontology-server:
     dependencies:
       '@data-agent-ontology/ontology-client':

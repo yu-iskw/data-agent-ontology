@@ -1,0 +1,27 @@
+{
+  "name": "@data-agent-ontology/ontology-mastra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Attaches an ontology to an existing Mastra agent: context injection, lookup and note tools, and SQL tool wrapping.",
+  "keywords": [
+    "ontology",
+    "analytics-agent",
+    "mastra"
+  ],
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@data-agent-ontology/ontology-client": "workspace:*",
+    "@data-agent-ontology/ontology-core": "workspace:*",
+    "@mastra/core": "^1.71.0",
+    "zod": "^4.6.5"
+  }
+}
