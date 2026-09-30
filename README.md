@@ -19,11 +19,9 @@ const ontology = new RemoteOntologyClient({
 });
 
 export const agent = new Agent(
-  withOntology(
-    { id: 'analyst', instructions, model, tools: { run_sql } },
-    ontology,
-    { sqlTools: ['run_sql'] },
-  ),
+  withOntology({ id: 'analyst', instructions, model, tools: { run_sql } }, ontology, {
+    sqlTools: ['run_sql'],
+  }),
 );
 ```
 
