@@ -11,6 +11,7 @@ ontology.revise(patch); // authoritative semantic change
 ontology.browse('revenue by store'); // at most 6 domains and terms
 ontology.resolve(['order', 'location']); // at most 5 terms, grounded to columns
 ontology.rollback('v2'); // moves the active pointer only
+ontology.revert('v3'); // new version that undoes v3 and keeps later changes
 ontology.snapshot(); // visible records of the active version
 
 const json = ontology.store.toJSON(); // whole history as JSON, shared revisions written once
@@ -27,6 +28,23 @@ const restored = new Ontology(OntologyStore.fromJSON(json));
 - Mapping integrity: a term maps only to tables in its domain. Relations may cross domains.
 
 `src/ontology.test.ts` covers each required test in RFC section 18.
+
+## Concurrent writers
+
+The store is single-writer per file, but several agents can still hold stale reads. Every write can name the version it read and who wrote it:
+
+```ts
+ontology.revise(patch, { baseVersionId: 'v7', actor: { id: 'agent-a', onBehalfOf: 'alice' } });
+```
+
+- **Compare-and-set.** The active pointer moves only if it still holds the version the commit started from. `expectedActive` on `revise`, `revert`, and `rollback` fails with `ActiveVersionChangedError` when it does not.
+- **Record-level merge.** A `baseVersionId` older than the active head merges when the patch touches no record the others changed between the two (compared by shared revision id). Otherwise `MergeConflictError` carries `{ kind, id, base, theirs, mine }` per record and nothing is written. A change the head already holds is not a conflict. Constraints on one term compete as a set, so a second writer cannot add a rule beside one it has not seen.
+- **Stale full scopes.** A full `Submission` may carry `observedAt`. Records another version added or changed after that instant are not deactivated.
+- **Revert.** `revert(versionId)` commits a version that restores what that version changed, unless a later version changed the same record (`RevertConflictError`).
+- **Actor.** `Version` records `actor`, `mergedFromVersionId`, and `proposalId`. Files created before this field existed gain the column on open.
+- **Commit cost.** A commit writes only new revisions and links a version's records in one statement. A one-record revise on 3,300 records takes about 35 ms (it took 3.7 s).
+
+`src/concurrency.test.ts` covers each case.
 
 ## Not yet implemented
 

@@ -12,7 +12,7 @@ export type MappingRole = 'primary_key' | 'foreign_key' | 'attribute';
 
 export type EvidenceSource = 'submission' | 'revise' | 'trajectory';
 
-export type VersionReason = 'scope' | 'revise';
+export type VersionReason = 'scope' | 'revise' | 'revert';
 
 export interface Lifecycle {
   active: boolean;
@@ -93,11 +93,38 @@ export interface OntologyRecords {
 
 export type RecordKind = keyof OntologyRecords;
 
+/** Who wrote a version. `onBehalfOf` is the end user when an agent host writes for them. */
+export interface Actor {
+  id: string;
+  onBehalfOf?: string;
+}
+
 export interface Version {
   versionId: string;
   parentVersionId: string | null;
   createdAt: string;
   reason: VersionReason;
+  actor?: Actor;
+  /** Set when the write was made against an older base and merged onto the active head. */
+  mergedFromVersionId?: string;
+  /** The accepted proposal this version applies, when there is one. */
+  proposalId?: string;
+}
+
+/** Options every write accepts. */
+export interface WriteOptions {
+  actor?: Actor;
+  proposalId?: string;
+}
+
+export interface ReviseOptions extends WriteOptions {
+  /** Version the patch was written against, from the read that informed it. Defaults to the active version. */
+  baseVersionId?: string;
+}
+
+export interface MoveOptions extends WriteOptions {
+  /** Fail unless this is still the active version. */
+  expectedActive?: string;
 }
 
 export interface Scope {
@@ -131,6 +158,11 @@ export interface WarehouseObject {
 }
 
 export interface Submission {
+  /**
+   * When the warehouse was read. A full-scope submission does not deactivate a record that
+   * another version added or changed after this instant.
+   */
+  observedAt?: string;
   scope: Scope[];
   tables: TableObservation[];
   columns: ColumnObservation[];

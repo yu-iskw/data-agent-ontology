@@ -101,23 +101,40 @@ function deactivateTable(draft: Draft, table: Table): void {
   }
 }
 
+/** Records that another version added or changed after `observedAt` were not part of that observation. */
+function unseen(
+  draft: Draft,
+  kind: 'tables' | 'columns',
+  id: string,
+  observedAt?: string,
+): boolean {
+  return observedAt !== undefined && draft.changedSince(kind, id, observedAt);
+}
+
 function deactivateMissing(
   draft: Draft,
   scope: Scope,
-  observedTables: Set<string>,
-  observedColumns: Set<string>,
+  observed: { tables: Set<string>; columns: Set<string>; at?: string },
 ): void {
   for (const table of draft.list('tables')) {
     if (!table.active || !inScope(scope, table.engine, table.path)) {
       continue;
     }
-    if (!observedTables.has(table.tableId)) {
-      deactivateTable(draft, table);
+    if (!observed.tables.has(table.tableId)) {
+      if (!unseen(draft, 'tables', table.tableId, observed.at)) {
+        deactivateTable(draft, table);
+      }
       continue;
     }
     const missing = draft
       .list('columns')
-      .filter((c) => c.tableId === table.tableId && c.active && !observedColumns.has(c.columnId));
+      .filter(
+        (c) =>
+          c.tableId === table.tableId &&
+          c.active &&
+          !observed.columns.has(c.columnId) &&
+          !unseen(draft, 'columns', c.columnId, observed.at),
+      );
     for (const column of missing) {
       draft.put('columns', column.columnId, { ...column, active: false });
     }
@@ -173,7 +190,11 @@ export function applySubmission(draft: Draft, submission: Submission): void {
     submission.columns.map((column) => upsertColumn(draft, column, observedTables)),
   );
   for (const scope of submission.scope.filter((entry) => entry.completeness === 'full')) {
-    deactivateMissing(draft, scope, observedTables, observedColumns);
+    deactivateMissing(draft, scope, {
+      tables: observedTables,
+      columns: observedColumns,
+      at: submission.observedAt,
+    });
   }
   for (const removed of submission.removed ?? []) {
     applyRemoval(draft, removed);

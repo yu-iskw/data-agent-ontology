@@ -1,19 +1,23 @@
 import { isVisible } from './model.js';
 import { browseRecords, resolveRecords, withoutRevisionFlag } from './read.js';
+import { applyRevert, RevertRootError } from './revert.js';
 import { applyRevision } from './revise.js';
-import { OntologyStore } from './store.js';
+import { OntologyStore, UnknownVersionError } from './store.js';
 import { applySubmission } from './submit.js';
 
 import type {
   BrowseResult,
   Lifecycle,
+  MoveOptions,
   OntologyRecords,
   OntologySnapshot,
   RecordKind,
   ResolveResult,
+  ReviseOptions,
   RevisePatch,
   Submission,
   Version,
+  WriteOptions,
 } from './model.js';
 import type { RecordReader } from './read.js';
 
@@ -44,20 +48,50 @@ export class Ontology {
     return { versionId: this.requireActive().versionId, ...resolveRecords(this.reader(), termIds) };
   }
 
-  submitScope(submission: Submission): Version {
-    return this.store.commit('scope', (draft) => {
-      applySubmission(draft, submission);
-    });
+  /** Structural writes always apply to the active head; `observedAt` guards stale full scopes. */
+  submitScope(submission: Submission, options: WriteOptions = {}): Version {
+    return this.store.commit(
+      'scope',
+      (draft) => {
+        applySubmission(draft, submission);
+      },
+      options,
+    );
   }
 
-  revise(patch: RevisePatch): Version {
-    return this.store.commit('revise', (draft) => {
-      applyRevision(draft, patch);
-    });
+  revise(patch: RevisePatch, options: ReviseOptions = {}): Version {
+    return this.store.commit(
+      'revise',
+      (draft) => {
+        applyRevision(draft, patch);
+      },
+      options,
+    );
   }
 
-  rollback(versionId: string): Version {
-    return this.store.activate(versionId);
+  /** Moves the active pointer back or forward. Later changes leave the active view; use `revert` to keep them. */
+  rollback(versionId: string, options: Pick<MoveOptions, 'expectedActive'> = {}): Version {
+    return this.store.activate(versionId, options.expectedActive);
+  }
+
+  /** Commits a new version that undoes one version's changes and keeps everything after it. */
+  revert(versionId: string, options: MoveOptions = {}): Version {
+    const target = this.store.listVersions().find((version) => version.versionId === versionId);
+    if (!target) {
+      throw new UnknownVersionError(versionId);
+    }
+    if (target.parentVersionId === null) {
+      throw new RevertRootError(versionId);
+    }
+    const before = this.store.recordsOf(target.parentVersionId);
+    const after = this.store.recordsOf(versionId);
+    return this.store.commit(
+      'revert',
+      (draft) => {
+        applyRevert(draft, versionId, after, before);
+      },
+      options,
+    );
   }
 
   /** Visible records of the active version, in the artifact shape the evaluator reads. */
