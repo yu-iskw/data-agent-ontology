@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { Ontology } from '@data-agent-ontology/ontology-core';
 
 import { applyProposal } from './apply.js';
+import { investigateWarehouse } from './investigate.js';
 import { DEFAULT_MODEL } from './model.js';
 import { observeWarehouse } from './observe.js';
 import { proposalSchema } from './proposal.js';
@@ -114,6 +115,15 @@ async function runLive(warehouse: Warehouse, ontology: Ontology, model: string):
   return { proposal, sql, model };
 }
 
+/** Checks the warehouse with SQL and applies that proposal. No model and no credentials. */
+async function runInvestigated(warehouse: Warehouse, ontology: Ontology): Promise<void> {
+  const proposal = await investigateWarehouse(warehouse);
+  const problems = applyProposal(ontology, proposal);
+  if (problems.length > 0) {
+    throw new Error(`The investigated proposal was rejected:\n- ${problems.join('\n- ')}`);
+  }
+}
+
 /** Applies a recorded proposal without a model, so a run can be repeated offline. */
 async function runReplay(ontology: Ontology, path: string): Promise<Run> {
   const recording = await readRecording(path);
@@ -134,6 +144,7 @@ async function main(): Promise<void> {
       out: { type: 'string' },
       model: { type: 'string' },
       'scope-only': { type: 'boolean', default: false },
+      investigate: { type: 'boolean', default: false },
       record: { type: 'string' },
       replay: { type: 'string' },
     },
@@ -147,6 +158,19 @@ async function main(): Promise<void> {
     if (values['scope-only']) {
       const observed = await writeArtifact(out, ontology);
       console.log(`Wrote ${out}: structure only, ${observed.tables.length} tables, no semantics`);
+      return;
+    }
+    if (values.investigate) {
+      if (values.replay) {
+        throw new Error('Use either --investigate or --replay');
+      }
+      await runInvestigated(warehouse, ontology);
+      const snapshot = await writeArtifact(out, ontology);
+      console.log(
+        `Wrote ${out}: ${snapshot.domains.length} domains, ${snapshot.tables.length} tables, ` +
+          `${snapshot.terms.length} terms, ${snapshot.mappings.length} mappings, ` +
+          `${snapshot.relations.length} relations, ${snapshot.constraints.length} constraints (investigated)`,
+      );
       return;
     }
     const run = values.replay

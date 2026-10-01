@@ -58,6 +58,7 @@ pnpm --filter @data-agent-ontology/example-mastra-basic seed   # `extract` is an
 | Flag              | Effect                                                                                                                            |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `--scope-only`    | Writes the structure-only ontology (no model, no credentials). Use it as the baseline the evaluator diff starts from.             |
+| `--investigate`   | Fills domains, terms, relations, and constraints by checking the warehouse with read-only SQL. No model and no credentials.       |
 | `--record <file>` | After a live run, saves the accepted proposal, the model id, and every SQL statement the seed agent ran (with database errors).   |
 | `--replay <file>` | Applies a recording instead of calling a model, so an extraction can be repeated offline and byte-for-byte. Needs no credentials. |
 
