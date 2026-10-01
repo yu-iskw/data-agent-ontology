@@ -31,6 +31,14 @@ function columnLine(
   return `${owner}.${column.name} ${column.dataType}${label ? ` (${label})` : ''}`;
 }
 
+function evidenceLine(result: ResolveResult, targetId: string): string | undefined {
+  const evidence = result.evidence.find((entry) => entry.targetId === targetId);
+  if (evidence === undefined) {
+    return undefined;
+  }
+  return `  evidence ${evidence.source}: ${evidence.summary}`;
+}
+
 function termBlock(result: ResolveResult, term: Term): string[] {
   const tables = new Map(result.tables.map((table) => [table.tableId, table]));
   const columns = new Map(result.columns.map((column) => [column.columnId, column]));
@@ -47,9 +55,17 @@ function termBlock(result: ResolveResult, term: Term): string[] {
     lines.push(
       `  relation ${relation.fromTermId} ${relation.name} ${relation.toTermId}: ${relation.join}`,
     );
+    const evidence = evidenceLine(result, relation.relationId);
+    if (evidence !== undefined) {
+      lines.push(evidence);
+    }
   }
   for (const constraint of result.constraints.filter((c) => c.termId === term.termId)) {
     lines.push(`  constraint ${constraint.text}`);
+    const evidence = evidenceLine(result, constraint.constraintId);
+    if (evidence !== undefined) {
+      lines.push(evidence);
+    }
   }
   return lines;
 }
