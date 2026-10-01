@@ -12,6 +12,9 @@ const MCP_PATH = '/mcp';
 export const DEFAULT_HTTP_PORT = 8788;
 export const DEFAULT_HTTP_HOST = '127.0.0.1';
 
+/** Same cap as `readJson` in `packages/ontology-server/src/http.ts`. */
+const MAX_BODY_BYTES = 8 * 1024 * 1024;
+
 const JSON_HEADERS = { 'content-type': 'application/json' };
 
 interface HttpListenOptions {
@@ -50,10 +53,37 @@ function writeJson(response: ServerResponse, status: number, body: unknown): voi
   response.end(JSON.stringify(body));
 }
 
+/**
+ * Reads a POST body, stopping at {@link MAX_BODY_BYTES}.
+ * `undefined` means the body crossed that cap and was not buffered further.
+ */
+async function readLimitedBody(request: IncomingMessage): Promise<Buffer | undefined> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const buffer = chunk as Buffer;
+    size += buffer.length;
+    if (size > MAX_BODY_BYTES) {
+      return undefined;
+    }
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
+function parseBody(bytes: Buffer): unknown {
+  try {
+    return JSON.parse(bytes.toString('utf8')) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
 async function dispatch(
   request: IncomingMessage,
   response: ServerResponse,
   client: OntologyClient,
+  parsedBody?: unknown,
 ): Promise<void> {
   const mcp = createOntologyMcpServer(client);
   const transport = new StreamableHTTPServerTransport({
@@ -65,7 +95,7 @@ async function dispatch(
     void mcp.close();
   });
   await mcp.connect(transport);
-  await transport.handleRequest(request, response);
+  await transport.handleRequest(request, response, parsedBody);
 }
 
 async function handle(
@@ -85,6 +115,18 @@ async function handle(
   if (request.method !== 'POST' && request.method !== 'DELETE') {
     response.writeHead(405, { allow: 'POST, DELETE' });
     response.end();
+    return;
+  }
+  if (request.method === 'POST') {
+    const bytes = await readLimitedBody(request);
+    if (bytes === undefined) {
+      writeJson(response, 400, {
+        error: 'bad_request',
+        message: 'The request body is too large',
+      });
+      return;
+    }
+    await dispatch(request, response, options.client, parseBody(bytes));
     return;
   }
   await dispatch(request, response, options.client);
